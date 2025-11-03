@@ -48,13 +48,15 @@ def activate_location(engine, destination, inputobj, player) -> List[str]:
     #check if destination location is a date
     if engine.current_location.is_date == True:
         messages.append(
-            "I'm excited to meet %s here for our date." % engine.current_location.date_girl.name
+            f"I'm excited to meet {engine.current_location.date_girl.name} here for our date."
         )
         date_message = engine.start_date()
         if date_message:
             messages.append(date_message)
     else:
-        messages.append("I am currently at the "+ str(engine.current_location.name) + ".")
+        messages.append(
+            f"I am currently at the {engine.current_location.name}."
+        )
         #clear list of characters in location (for both INPUTOBJ and LOCATION obj)
         #repopulate list of avaiable characters based on current location
         del inputobj.character[:]
