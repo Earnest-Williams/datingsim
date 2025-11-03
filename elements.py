@@ -61,10 +61,14 @@ class Engine(object):
         self.state.enable_dialogue(self)
     def start_day(self):
         self.state.enable_day(self)
-        self.current_location.describe()
+        if self.current_location:
+            return self.current_location.describe()
+        return ""
     def start_date(self):
         self.state.enable_date(self)
-        self.current_location.describe()
+        if self.current_location:
+            return self.current_location.describe()
+        return ""
         
     #Engine Setup functions
     def introduction(self, text):

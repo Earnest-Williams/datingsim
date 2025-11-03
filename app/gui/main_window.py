@@ -55,8 +55,7 @@ class MainWindow(QWidget):
         self.bus.talk_to.connect(self._talk)
 
         # First dialogue payload to demonstrate overlay
-        self.engine.next_dialogue_payload()
-        self.advance()
+        self.engine.advance_dialogue()
 
     def _emit_character(self, c):
         snap = {
@@ -77,6 +76,8 @@ class MainWindow(QWidget):
         QShortcut(QKeySequence("Tab"), self, activated=self.toggle_left)
         QShortcut(QKeySequence("Shift+Tab"), self, activated=self.toggle_right)
         QShortcut(QKeySequence("Space"), self, activated=self.advance)
+        QShortcut(QKeySequence("Ctrl+S"), self, activated=self._save)
+        QShortcut(QKeySequence("Ctrl+L"), self, activated=self._load)
         # numeric choices 1..9
         for n in range(1,10):
             QShortcut(QKeySequence(str(n)), self,
@@ -101,16 +102,19 @@ class MainWindow(QWidget):
     def toggle_right(self): self.right.toggle(self.rect())
 
     def advance(self):
-        payload = self.engine.next_dialogue_payload()
-        self.bus.dialogue_ready.emit(payload)
+        self.engine.advance_dialogue()
 
     def choose(self, option_id: int):
         self.engine.apply_choice(option_id)
-        self.advance()
 
     def _travel(self, exit_key: str):
         self.engine.travel_to(exit_key)
 
     def _talk(self, girl_name: str):
         self.engine.focus(girl_name)
-        self.advance()
+
+    def _save(self):
+        self.engine.save()
+
+    def _load(self):
+        self.engine.load()
