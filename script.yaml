@@ -61,16 +61,16 @@ dialogue_trees:
         question: Do you know where I can have some copies of this document made?
       reply:
         compliment:
-        - Thank you. Thats really nice of you to say.
+        - "Thank you. Thats really nice of you to say."
         - 0
         introduction:
-        - Um.. That's nice.
+        - "Um.. That's nice."
         - 1
         question:
-        - Sure, the copy machine is right over here. I will show you.
-        - 1
+        - "Sure, the copy machine is right over here. I will show you."
+        - 0
         observation:
-        - Yeah....
+        - "Yeah...."
         - 0
     '3':
       statement:
