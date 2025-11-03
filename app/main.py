@@ -1,6 +1,9 @@
 """Application entry point."""
 
 import argparse
+import logging
+from logging.handlers import RotatingFileHandler
+from pathlib import Path
 import sys
 
 
@@ -12,6 +15,22 @@ def _ensure_supported_runtime():
             "This application requires Python 3. "
             "Please run it with `python3 -m app.main`."
         )
+
+def _setup_logging() -> None:
+    cache_dir = Path(".cache")
+    cache_dir.mkdir(parents=True, exist_ok=True)
+    log_path = cache_dir / "datingsim.log"
+    handler = RotatingFileHandler(
+        log_path,
+        maxBytes=1_048_576,
+        backupCount=3,
+        encoding="utf-8",
+    )
+    logging.basicConfig(
+        level=logging.INFO,
+        format="%(asctime)s %(levelname)s %(name)s: %(message)s",
+        handlers=[handler],
+    )
 
 
 def _import_qt_objects():
@@ -58,6 +77,7 @@ def _parse_args(argv):
 
 def main(argv=None):
     _ensure_supported_runtime()
+    _setup_logging()
     argv = sys.argv[1:] if argv is None else argv
     args, qt_args = _parse_args(argv)
     sys.exit(_exec_qt_application(qt_args, seed=args.seed))

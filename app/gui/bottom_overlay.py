@@ -1,5 +1,13 @@
-from PySide6.QtCore import QEasingCurve, QPropertyAnimation, QRect
-from PySide6.QtWidgets import QWidget, QVBoxLayout, QLabel, QPushButton, QHBoxLayout
+from PySide6.QtCore import QEasingCurve, QPropertyAnimation, QRect, Qt
+from PySide6.QtWidgets import (
+    QWidget,
+    QVBoxLayout,
+    QLabel,
+    QPushButton,
+    QHBoxLayout,
+    QListWidget,
+    QListWidgetItem,
+)
 
 class BottomOverlay(QWidget):
     def __init__(self, bus, *args, **kwargs):
@@ -16,21 +24,27 @@ class BottomOverlay(QWidget):
         """)
         self.toast = QLabel(wordWrap=True, objectName="toast")
         self.toast.setVisible(False)
+        self.history = QListWidget()
+        self.history.setObjectName("toast-history")
+        self.history.setVisible(False)
         self.speaker = QLabel(objectName="speaker")
         self.text = QLabel(wordWrap=True, objectName="text")
         self.choices = QHBoxLayout()
         v = QVBoxLayout(self)
         v.setContentsMargins(16,12,16,12)
         v.addWidget(self.toast)
+        v.addWidget(self.history)
         v.addWidget(self.speaker)
         v.addWidget(self.text)
         v.addLayout(self.choices)
         self.setVisible(False)
         self._anim = QPropertyAnimation(self, b"geometry", duration=180)
         self._anim.setEasingCurve(QEasingCurve.OutCubic)
+        self._history_visible = False
 
         self.bus.dialogue_ready.connect(self.show_dialogue)
         self.bus.toast.connect(self.show_toast)
+        self.bus.toast_history.connect(self._render_history)
 
     def resize_to(self, rect: QRect, height_px: int = 220):
         self.setGeometry(0, rect.height(), rect.width(), height_px)
@@ -62,3 +76,24 @@ class BottomOverlay(QWidget):
     def show_toast(self, message: str):
         self.toast.setVisible(bool(message))
         self.toast.setText(message)
+        if self.history.isVisible():
+            self.history.scrollToBottom()
+
+    def _render_history(self, entries):
+        self.history.clear()
+        if not entries:
+            item = QListWidgetItem("—", self.history)
+            item.setFlags(Qt.NoItemFlags)
+        else:
+            for entry in entries:
+                QListWidgetItem(entry, self.history)
+        if self._history_visible:
+            self.history.setVisible(True)
+
+    def toggle_history(self):
+        self._history_visible = not self._history_visible
+        self.history.setVisible(self._history_visible)
+        if self._history_visible:
+            parent = self.parent()
+            if parent is not None:
+                self.show_panel(parent.rect())

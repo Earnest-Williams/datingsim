@@ -2,6 +2,8 @@ from __future__ import annotations
 
 from typing import Optional
 
+import logging
+
 from PySide6.QtCore import Qt
 from PySide6.QtGui import QAction, QKeySequence, QShortcut
 from PySide6.QtWidgets import QInputDialog, QWidget
@@ -23,6 +25,7 @@ class MainWindow(QWidget):
         super().__init__()
         self.setMinimumSize(1280, 720)
         self.bus = Bus()
+        self._logger = logging.getLogger(__name__)
 
         self.script = load_script()
         self.ui_strings = self.script.get("ui", {})
@@ -134,8 +137,13 @@ class MainWindow(QWidget):
 
     def _init_engine(self, seed: Optional[int]) -> None:
         self._seed = seed
-        self.engine = EngineAdapter(self.bus, seed=seed)
-        self.engine.advance_dialogue()
+        try:
+            self.engine = EngineAdapter(self.bus, seed=seed)
+            self.engine.advance_dialogue()
+        except Exception as exc:  # pragma: no cover - UI safety net
+            self._logger.exception("Failed to initialise engine")
+            self.bus.toast.emit(str(exc))
+            self.engine = None
 
     def _emit_character(self, c):
         snap = {
@@ -157,6 +165,7 @@ class MainWindow(QWidget):
         QShortcut(QKeySequence("Space"), self, activated=self.advance)
         QShortcut(QKeySequence("Ctrl+S"), self, activated=self._save)
         QShortcut(QKeySequence("Ctrl+L"), self, activated=self._load)
+        QShortcut(QKeySequence("H"), self, activated=self.toggle_history)
         # numeric choices 1..9
         for n in range(1, 10):
             QShortcut(
@@ -188,24 +197,35 @@ class MainWindow(QWidget):
 
     def advance(self):
         if self.engine:
-            self.engine.advance_dialogue()
+            self._safe_call(self.engine.advance_dialogue)
 
     def choose(self, option_id: int):
         if self.engine:
-            self.engine.apply_choice(option_id)
+            self._safe_call(self.engine.apply_choice, option_id)
 
     def _travel(self, exit_key: str):
         if self.engine:
-            self.engine.travel_to(exit_key)
+            self._safe_call(self.engine.travel_to, exit_key)
+
+    def toggle_history(self):
+        self.overlay.toggle_history()
 
     def _talk(self, girl_name: str):
         if self.engine:
-            self.engine.focus(girl_name)
+            self._safe_call(self.engine.focus, girl_name)
 
     def _save(self):
         if self.engine:
-            self.engine.save()
+            self._safe_call(self.engine.save)
 
     def _load(self):
         if self.engine:
-            self.engine.load()
+            self._safe_call(self.engine.load)
+
+    def _safe_call(self, func, *args, **kwargs):
+        try:
+            return func(*args, **kwargs)
+        except Exception as exc:  # pragma: no cover - UI safety net
+            self._logger.exception("Engine interaction failed")
+            self.bus.toast.emit(str(exc))
+            return None

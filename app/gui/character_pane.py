@@ -1,5 +1,6 @@
 from typing import Any, Dict, Optional
 
+from PySide6.QtCore import Qt
 from PySide6.QtWidgets import (
     QWidget,
     QLabel,
@@ -41,6 +42,8 @@ class CharacterPane(QWidget):
 
         self.attrs_lbl = QLabel(f"<b>{ui.get('attributes_title', 'Attributes')}</b>")
         self.attrs = QLabel(self._placeholder)
+        self.affinity_lbl = QLabel(f"<b>{ui.get('affinity_title', 'Affinity')}</b>")
+        self.affinity = QListWidget()
         self.skills_lbl = QLabel(f"<b>{ui.get('skills_title', 'Skills')}</b>")
         self.skills = QLabel(self._placeholder)
         self.cond_lbl = QLabel(f"<b>{ui.get('conditions_title', 'Conditions')}</b>")
@@ -54,6 +57,8 @@ class CharacterPane(QWidget):
         root.addLayout(bars)
         root.addWidget(self.attrs_lbl)
         root.addWidget(self.attrs)
+        root.addWidget(self.affinity_lbl)
+        root.addWidget(self.affinity)
         root.addWidget(self.skills_lbl)
         root.addWidget(self.skills)
         root.addWidget(self.cond_lbl)
@@ -85,6 +90,15 @@ class CharacterPane(QWidget):
             conds = [f"{k}: {v}" for k, v in conds.items()]
         cond_text = self._list_join.join(map(str, conds))
         self.cond.setText(cond_text or self._placeholder)
+
+        self.affinity.clear()
+        affinity = s.get("affinity", {}) or {}
+        if isinstance(affinity, dict) and affinity:
+            for name, opinion in sorted(affinity.items()):
+                QListWidgetItem(f"{name.title()}: {opinion}", self.affinity)
+        else:
+            item = QListWidgetItem(self._placeholder, self.affinity)
+            item.setFlags(Qt.NoItemFlags)
 
     def update_inventory(self, items):
         self.inv.clear()
