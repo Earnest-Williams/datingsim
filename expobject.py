@@ -6,12 +6,12 @@ class Experience(object):
         
     def date(self, engine, player):
         #describe location Experience
-        print engine.current_location.date_description
+        print(engine.current_location.date_description)
         time.sleep(0.3)
 
         #check if Girl has affinity for Location (increase experience chance)
         if engine.current_location.name == engine.current_location.date_girl.affinity:
-            print engine.current_location.date_girl.name, "loves it here!"
+            print(engine.current_location.date_girl.name, "loves it here!")
             exp_chance_increase = 3
         else:
             exp_chance_increase = 0
@@ -33,14 +33,14 @@ class Experience(object):
         #if EXP happens, you can commit to her and she can fall in love with
         #you on first "Hang"
         if exp_chance == 1:
-            print "EXP OCCURRED!"
+            print("EXP OCCURRED!")
             player.experiences[engine.current_location.experience_gained] = True
 
             if engine.current_location.date_girl.committed_in != True:
                 player.commit(engine.current_location.date_girl)
             love_chance = random.randint(1,engine.current_location.date_girl.love_count)
             if love_chance == 1:
-                print "She fell in love with you."
+                print("She fell in love with you.")
                 engine.fall_in_love(player, engine.current_location.date_girl)
             else:
                 engine.current_location.date_girl.love_count -= 1
@@ -54,12 +54,12 @@ class Experience(object):
                 time.sleep(0.5)
                 love_chance = random.randint(1,engine.current_location.date_girl.love_count)
                 if love_chance == 1:
-                    print "She almost fell in love with you (but didn't cause it was your first time hanging out)."    
+                    print("She almost fell in love with you (but didn't cause it was your first time hanging out).")    
                 engine.current_location.date_girl.first_hangout = False
             else:
                 love_chance = random.randint(1,engine.current_location.date_girl.love_count)
                 if love_chance == 1:
-                    print "She fell in love with you."
+                    print("She fell in love with you.")
                     engine.fall_in_love(player, engine.current_location.date_girl)
                 else:
                     engine.current_location.date_girl.love_count -= 1
@@ -70,7 +70,7 @@ class Experience(object):
             engine.current_location.experience_count -= 1
         
         
-        print "End of Date."
+        print("End of Date.")
         engine.current_location.is_date = False
         engine.start_day()
     

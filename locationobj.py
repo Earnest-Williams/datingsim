@@ -17,16 +17,16 @@ class Location(object):
         self.date_girl = None
 
     def describe(self):
-        print self.description
+        print(self.description)
 
     def describe_thing(self, thing):
-        print self.nouns[thing]
+        print(self.nouns[thing])
 
 def activate_location(engine, destination, inputobj, player):
     #if a 'current location already exists set new destination to current
     #location based off it's relationship to current location
     if engine.current_location:
-        if destination in engine.current_location.destinations.keys():
+        if destination in engine.current_location.destinations:
             new_location = engine.current_location.destinations[destination]
             engine.current_location = engine.locations[new_location]
         else:
@@ -36,27 +36,27 @@ def activate_location(engine, destination, inputobj, player):
         
     #check if destination location is a date
     if engine.current_location.is_date == True:
-        print "I'm excited to meet %s here for our date." % engine.current_location.date_girl.name
+        print("I'm excited to meet %s here for our date." % engine.current_location.date_girl.name)
         engine.start_date()
     else:
-        print "I am currently at the "+ str(engine.current_location.name) + "."
+        print("I am currently at the "+ str(engine.current_location.name) + ".")
         #clear list of characters in location (for both INPUTOBJ and LOCATION obj)
         #repopulate list of avaiable characters based on current location
         del inputobj.character[:]
         del engine.current_location.characters[:]
-        for k, v in engine.girls.iteritems():
+        for k, v in engine.girls.items():
             if v.meet_at != 'none':
                 if engine.current_location.name == v.meet_at:
                     inputobj.character.append(k)
                     engine.current_location.characters.append(k)
-                    print "%s is here." % k
+                    print("%s is here." % k)
                     v.meet_her_at()
             else:
                 see_at = random.choice(v.see_at)
                 if engine.current_location.name == see_at:
                     inputobj.character.append(k)
                     engine.current_location.characters.append(k)
-                    print "%s is here." % k
+                    print("%s is here." % k)
                 
     #add currect location to player.known_locations if its not already there
     if engine.current_location.name not in player.known_locations:            
@@ -65,7 +65,7 @@ def activate_location(engine, destination, inputobj, player):
     #clear the list of directions you can go    
     #repopulate list of available directions based on current location
     del inputobj.direction[:]
-    for k, v in engine.current_location.destinations.iteritems():
+    for k, v in engine.current_location.destinations.items():
         inputobj.direction.append(k)
 
     ###NOTE!!!!!!!!!!
@@ -73,17 +73,17 @@ def activate_location(engine, destination, inputobj, player):
     #AND add location verbs to inputobject verb list
     del inputobj.verb[:]
     inputobj.verb = ['go','give','leave','use','look', 'talk']
-    for k, v in engine.current_location.verbs.iteritems():
+    for k, v in engine.current_location.verbs.items():
         inputobj.verb.append(k)
         
     #add location nouns to inputobject verb list
     del inputobj.noun[:]
-    for k, v in engine.current_location.nouns.iteritems():
+    for k, v in engine.current_location.nouns.items():
         inputobj.noun.append(k)
         
     #add location inactive verbs to inputobjects inactive verb list
     del inputobj.inactive_verb[:]
-    for k, v in engine.current_location.inactive_verbs.iteritems():
+    for k, v in engine.current_location.inactive_verbs.items():
         inputobj.inactive_verb.append(k)
     
     ####### PUTTING THIS HERE. NOT SURE IF GOES ELSEWHERE BETTER!!! ########

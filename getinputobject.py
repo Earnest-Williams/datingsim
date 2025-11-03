@@ -34,15 +34,15 @@ class Input(object):
         }
     
     def error_msg(self):
-        print "I didn't understand you. Try again or type '?'."
+        print("I didn't understand you. Try again or type '?'.")
         
     def help(self):
         if not self.vocab['inactive_verb']:
-            print "I can do the following", self.vocab['verb']
+            print("I can do the following", self.vocab['verb'])
         else:
-            print "I can do the following", self.vocab['verb'], "or", self.vocab['inactive_verb']
-        print "I can go in the following directions", self.vocab['direction']
-        print "The following are in this scene", self.vocab['noun']
+            print("I can do the following", self.vocab['verb'], "or", self.vocab['inactive_verb'])
+        print("I can go in the following directions", self.vocab['direction'])
+        print("The following are in this scene", self.vocab['noun'])
         
     def scan(self, sentence, inputobj):
         """Input the raw text --> Output a List of Tuples which correspond to the categories above"""
@@ -50,7 +50,7 @@ class Input(object):
         result=[]
         for word in wordlist:
             found=False
-            for key,value in inputobj.vocab.items():
+            for key,value in list(inputobj.vocab.items()):
                 if word.lower() in value:
                     result.append((key,word))
                     found=True
@@ -148,7 +148,7 @@ class Input(object):
         return Sentence(subj, verb, obj)
         
     def get_input(self, engine, character):
-        s = self.scan(raw_input("> "), self)
+        s = self.scan(input("> "), self)
         #print s
         
         x = self.parse_sentence(s)
@@ -160,7 +160,7 @@ class Input(object):
             self.error_msg()
         
         if x.subject == 'inactive_player':
-            print engine.current_location.inactive_verbs[x.verb]
+            print(engine.current_location.inactive_verbs[x.verb])
         
         if x.verb == "?":
             self.help()
@@ -169,7 +169,7 @@ class Input(object):
             if x.object.lower() == 'none':
                 self.error_msg()
             elif x.object.lower() == 'error':
-                print "I'm not sure where that is or if it even exists."
+                print("I'm not sure where that is or if it even exists.")
             else:
                 activate_location(engine, x.object.lower(), self, character)
                 
@@ -178,7 +178,7 @@ class Input(object):
                 if 'outside' in engine.current_location.destinations:
                     activate_location(engine, 'outside', self, character)
                 else:
-                    print "Where do you want to leave to?"
+                    print("Where do you want to leave to?")
             else:
                 activate_location(engine, x.object, self, character)
         
@@ -187,7 +187,7 @@ class Input(object):
                 self.error_msg()
             else:
                 if x.object not in engine.current_location.characters:
-                    print "I don't see that person here."
+                    print("I don't see that person here.")
                 else:
                     character.focus(engine.girls[x.object])
                     engine.start_dialogue()
