@@ -28,9 +28,14 @@ class Dialogue(object):
         if not cli_mode:
             raise RuntimeError("Dialogue.get_dialogue is CLI-only; use the GUI adapter")
 
-        encounter_text = self.messages["encounter_message"].format(
-            name=player.focus_character.name
-        )
+        encounter_template = self.messages["encounter_message"]
+        name_placeholder = "{name}"
+        if name_placeholder in encounter_template:
+            encounter_text = encounter_template.replace(
+                name_placeholder, f"{player.focus_character.name}"
+            )
+        else:
+            encounter_text = encounter_template
         print(f"\n        {encounter_text}\n")
 
         print(self.messages["greeting"])
