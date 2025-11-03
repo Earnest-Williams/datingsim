@@ -2,6 +2,9 @@ from __future__ import annotations
 
 from typing import Any, Dict, List, Optional, Tuple
 
+import contextlib
+import io
+
 from app.bus import Bus
 from elements import Character, Engine, Girl
 from girl_definitions import girl_list
@@ -33,6 +36,9 @@ class _NullInput:
 class EngineAdapter:
     """Bridge the legacy engine with the Qt GUI overlay."""
 
+    def _quiet(self):
+        return contextlib.redirect_stdout(io.StringIO())
+
     def __init__(self, bus: Bus):
         self.bus = bus
         self.script = load_script()
@@ -45,8 +51,9 @@ class EngineAdapter:
         self.e.build_girls(girl_list)
 
         self.mc.get_name("Protagonist")
-        activate_location(self.e, "residential district", _NullInput(), self.mc)
-        self.e.start_day()
+        with self._quiet():
+            activate_location(self.e, "residential district", _NullInput(), self.mc)
+            self.e.start_day()
 
         # Background/sprite asset maps.
         self._bg_by_loc: Dict[str, str] = {
@@ -152,7 +159,8 @@ class EngineAdapter:
             return
 
         self._level_index = min(self._level_index + 1, len(self._levels) - 1)
-        self.e.start_day()
+        with self._quiet():
+            self.e.start_day()
         self._emit_scene()
 
     # -------- internals --------
