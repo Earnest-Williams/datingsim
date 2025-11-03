@@ -79,6 +79,9 @@ class EngineAdapter:
 
     # -------- GUI API --------
     def next_dialogue_payload(self) -> Dict[str, Any]:
+        if self._pending_date:
+            return self._prepare_date_choices()
+
         girl = self._focused()
         if girl is None:
             empty_state = self._dialogue_ui.get("empty_scene", {})
@@ -130,42 +133,46 @@ class EngineAdapter:
         if girl is None:
             self._emit_stats()
             return
+
         _, level = self._current_level()
+        known = girl.name in self.mc.known_girls
+        reply_text: Optional[str] = None
 
-        def bump(key: str) -> None:
-            girl.opinion += level["reply"][key][1]
+        def apply_reply(key: str) -> None:
+            nonlocal reply_text
+            reply = level["reply"].get(key)
+            if not reply:
+                return
+            reply_text = reply[0]
+            girl.opinion += reply[1]
 
-        if girl.name not in self.mc.known_girls:
-            if option_id == 1:
-                bump("compliment")
-            elif option_id == 2:
+        if not known:
+            choice_map = {1: "compliment", 2: "introduction", 3: "question"}
+            key = choice_map.get(option_id)
+            if not key:
+                return
+            if key == "introduction":
                 self.mc.make_acquaintance(girl)
-                bump("introduction")
-            elif option_id == 3:
-                bump("question")
+            apply_reply(key)
         else:
-            if girl.opinion < 3:
-                if option_id == 1:
-                    bump("compliment")
-                elif option_id == 2:
-                    bump("observation")
-                elif option_id == 3:
-                    bump("question")
+            if option_id == 4 and girl.opinion >= 3:
+                self._pending_date = True
+                reply_text = self.dialogue_text.get("date_invite")
             else:
-                if option_id == 1:
-                    bump("compliment")
-                elif option_id == 2:
-                    bump("observation")
-                elif option_id == 3:
-                    bump("question")
-                elif option_id == 4:
-                    self._pending_date = True
+                choice_map = {1: "compliment", 2: "observation", 3: "question"}
+                key = choice_map.get(option_id)
+                if not key:
+                    return
+                apply_reply(key)
+
+        if reply_text:
+            self._toast(reply_text)
 
         self._emit_stats()
 
         if self._pending_date:
-            self._pending_date = False
-            self._show_date_choices()
+            self._emit_scene()
+            self.advance_dialogue()
             return
 
         self._level_index = min(self._level_index + 1, len(self._levels) - 1)
@@ -197,11 +204,13 @@ class EngineAdapter:
         with open(path, "w", encoding="utf-8") as f:
             yaml.safe_dump(data, f)
 
-    def load(self, path: str = "save.yaml") -> None:
+    def load(self, path: str = "save.yaml") -> bool:
         if not os.path.exists(path):
-            return
+            return False
         with open(path, "r", encoding="utf-8") as f:
             data = yaml.safe_load(f) or {}
+
+        loaded = bool(data)
 
         known = data.get("known_girls", [])
         if isinstance(known, list):
@@ -219,6 +228,7 @@ class EngineAdapter:
 
         if (loc := data.get("location")):
             self.travel_to(loc)
+        return loaded
 
     # -------- internals --------
     def focus(self, girl_name: str) -> None:
@@ -294,6 +304,11 @@ class EngineAdapter:
             affinity[girl_name] = girl.opinion
         stats["affinity"] = affinity
 
+        focused = self._focused()
+        stats["focused_girl"] = focused.name if focused else None
+        stats["focused_opinion"] = focused.opinion if focused else None
+        stats["known_girls"] = list(self.mc.known_girls)
+
         self.bus.stats_updated.emit(stats)
 
     def _emit_scene(self) -> None:
@@ -310,7 +325,7 @@ class EngineAdapter:
         self._emit_nav()
         self._emit_state()
 
-    def _show_date_choices(self) -> None:
+    def _prepare_date_choices(self) -> Dict[str, Any]:
         choices = self.dialogue_text["date_choices"]
         continue_label = self._general_ui.get("continue_label", "Continue")
         payload = {
@@ -322,6 +337,7 @@ class EngineAdapter:
         original_apply = self.apply_choice
 
         def _after_confirmation(_: int) -> None:
+            day_message: Optional[str] = None
             try:
                 self._level_index = min(self._level_index + 1, len(self._levels) - 1)
                 day_message = self.e.start_day()
@@ -334,7 +350,13 @@ class EngineAdapter:
         def _handle(option: int) -> None:
             idx = max(1, min(option, len(choices))) - 1
             loc_key = choices[idx]["location"]
-            self.e.make_date(self.e.locations[loc_key], self._focused())
+            location = self.e.locations.get(loc_key)
+            if location is None:
+                if self.e.locations:
+                    location = next(iter(self.e.locations.values()))
+                else:
+                    return
+            self.e.make_date(location, self._focused())
             self.apply_choice = _after_confirmation  # type: ignore[assignment]
             self.bus.dialogue_ready.emit(
                 {
@@ -348,4 +370,5 @@ class EngineAdapter:
             _handle(option)
 
         self.apply_choice = _await_date  # type: ignore[assignment]
-        self.bus.dialogue_ready.emit(payload)
+        self._pending_date = False
+        return payload
