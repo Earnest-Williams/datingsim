@@ -100,7 +100,7 @@ class Character(object):
         self.experiences = {
             "need_to_protect": False
         }
-        focus_character = None
+        self.focus_character = None
         
     def focus(self, character=None):
         if character:
