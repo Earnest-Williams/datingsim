@@ -2,8 +2,11 @@ from __future__ import annotations
 
 import contextlib
 import io
+import os
 from copy import deepcopy
 from typing import Any, Dict, List, Optional, Tuple
+
+import yaml
 
 from app.bus import Bus
 from app.loaders import load_character
@@ -163,6 +166,40 @@ class EngineAdapter:
             activate_location(self.e, exit_key, _inp, self.mc)
             self.e.start_day()
         self._emit_scene()
+
+    def save(self, path: str = "save.yaml") -> None:
+        focused = self._focused()
+        data = {
+            "focused": focused.name if focused else None,
+            "known_girls": list(self.mc.known_girls),
+            "opinions": {girl.name: girl.opinion for girl in self.e.girls.values()},
+            "location": self.e.current_location.name if self.e.current_location else None,
+        }
+        with open(path, "w", encoding="utf-8") as f:
+            yaml.safe_dump(data, f)
+
+    def load(self, path: str = "save.yaml") -> None:
+        if not os.path.exists(path):
+            return
+        with open(path, "r", encoding="utf-8") as f:
+            data = yaml.safe_load(f) or {}
+
+        known = data.get("known_girls", [])
+        if isinstance(known, list):
+            self.mc.known_girls = [str(name) for name in known]
+
+        for name, val in (data.get("opinions") or {}).items():
+            if name in self.e.girls:
+                try:
+                    self.e.girls[name].opinion = int(val)
+                except (TypeError, ValueError):
+                    continue
+
+        if (foc := data.get("focused")):
+            self.focus(foc)
+
+        if (loc := data.get("location")):
+            self.travel_to(loc)
 
     # -------- internals --------
     def focus(self, girl_name: str) -> None:
