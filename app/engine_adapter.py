@@ -9,7 +9,9 @@ from app.bus import Bus
 from elements import Character, Engine, Girl
 from girl_definitions import girl_list
 from location_definitions import location_list
-from locationobj import activate_location
+from expobject import set_random_seed as set_experience_random_seed
+from getdialogue import set_random_seed as set_dialogue_random_seed
+from locationobj import activate_location, set_random_seed as set_location_random_seed
 from script_loader import load_script
 from getinputobject import Input
 
@@ -19,8 +21,13 @@ class EngineAdapter:
     def _quiet(self):
         return contextlib.redirect_stdout(io.StringIO())
 
-    def __init__(self, bus: Bus):
+    def __init__(self, bus: Bus, *, seed: Optional[int] = None):
         self.bus = bus
+        if seed is not None:
+            set_location_random_seed(seed)
+            set_dialogue_random_seed(seed)
+            set_experience_random_seed(seed)
+
         self.script = load_script()
         self.dialogue_text = self.script["dialogue"]
         self.dialogue_trees = self.script["dialogue_trees"]
@@ -233,7 +240,8 @@ class EngineAdapter:
         def _handle(choice_id: int) -> None:
             idx = max(1, min(choice_id, len(choices))) - 1
             loc_key = choices[idx]["location"]
-            self.e.make_date(self.e.locations[loc_key], self._focused())
+            with self._quiet():
+                self.e.make_date(self.e.locations[loc_key], self._focused())
             self.bus.dialogue_ready.emit(
                 {
                     "speaker": self._focused().name.title() if self._focused() else "",
