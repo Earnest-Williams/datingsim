@@ -59,6 +59,8 @@ class EngineAdapter:
         self._level_index: int = 0
         self._pending_date: bool = False
         self._awaiting_confirmation: bool = False
+        self._date_choice_active: bool = False
+        self._date_choice_options: List[Dict[str, Any]] = []
 
     # ---------- high-level API consumed by GUI ----------
 
@@ -108,16 +110,22 @@ class EngineAdapter:
             "options": opts,
         }
 
-    def apply_choice(self, option_id: int):
-        """Apply the effects for the selected option and advance state."""
+    def apply_choice(self, option_id: int) -> Optional[Dict[str, Any]]:
+        """Apply the effects for the selected option and advance state.
+
+        Returns a payload when a downstream interaction should be shown
+        immediately (date selection / confirmation)."""
         girl = self._focused()
         if girl is None:
-            return
+            return None
 
         if self._awaiting_confirmation:
             self._awaiting_confirmation = False
             self._advance_level()
-            return
+            return None
+
+        if getattr(self, "_date_choice_active", False):
+            return self._handle_date_choice(option_id)
 
         _, level = self._current_level()
 
@@ -159,10 +167,10 @@ class EngineAdapter:
         # If a date was requested, inject a date-selection node once, using script["dialogue"]["date_choices"]
         if getattr(self, "_pending_date", False):
             self._pending_date = False
-            self._show_date_choices()
-            return
+            return self._show_date_choices()
 
         self._advance_level()
+        return None
 
     # ---------- internals ----------
 
@@ -207,35 +215,16 @@ class EngineAdapter:
         loc = self.e.current_location
         return loc.observations[0] if loc and loc.observations else "…"
 
-    def _show_date_choices(self):
-        """Emit a one-off payload to pick a date destination; apply immediately on click."""
+    def _show_date_choices(self) -> Dict[str, Any]:
+        """Return a payload that lets the user pick a date destination."""
         choices = self.dialogue_text["date_choices"]
-        payload = {
+        self._date_choice_active = True
+        self._date_choice_options = choices
+        return {
             "speaker": self._focused().name.title() if self._focused() else "",
             "text": f"{self.dialogue_text['date_invite']}",
             "options": [{"id": i + 1, "label": c["text"]} for i, c in enumerate(choices)],
         }
-        # Temporarily hijack option handling to map 1..N to chosen location
-        def _handle(choice_id: int):
-            idx = max(1, min(choice_id, len(choices))) - 1
-            loc_key = choices[idx]["location"]
-            self._make_date(loc_key)
-            # Confirmation text next advance
-            self._last_confirmation = self.dialogue_text["date_confirmation"]
-
-        # Install a one-shot handler by monkeypatching, then restore after click
-        original_apply = self.apply_choice
-        def one_shot(option_id: int):
-            try:
-                _handle(option_id)
-            finally:
-                # restore and auto-advance to confirmation
-                self.apply_choice = original_apply
-                self._emit_confirmation_then_day()
-        self.apply_choice = one_shot  # type: ignore
-
-        # Tell the overlay to show the date options now
-        self.bus.dialogue_ready.emit(payload)
 
     def _make_date(self, loc_key: str):
         girl = self._focused()
@@ -244,17 +233,27 @@ class EngineAdapter:
         # Mark date at target location
         self.e.make_date(self.e.locations[loc_key], girl)
 
-    def _emit_confirmation_then_day(self):
-        # show confirmation text once
-        txt = getattr(self, "_last_confirmation", "Okay.")
+    def _handle_date_choice(self, option_id: int) -> Dict[str, Any]:
+        choices = getattr(self, "_date_choice_options", [])
+        if not choices:
+            self._date_choice_active = False
+            return self._confirmation_payload(self.dialogue_text.get("date_confirmation", "Okay."))
+
+        idx = max(1, min(option_id, len(choices))) - 1
+        loc_key = choices[idx]["location"]
+        self._make_date(loc_key)
+        self._date_choice_active = False
+        confirmation = choices[idx].get("confirmation", self.dialogue_text["date_confirmation"])
+        return self._confirmation_payload(confirmation)
+
+    def _confirmation_payload(self, text: str) -> Dict[str, Any]:
         payload = {
             "speaker": self._focused().name.title() if self._focused() else "",
-            "text": txt,
+            "text": text,
             "options": [{"id": 1, "label": "Continue"}],
         }
-        self.bus.dialogue_ready.emit(payload)
         self._awaiting_confirmation = True
-        # after the user clicks "Continue", resume normal flow
+        return payload
 
     def _advance_level(self):
         self._level_index = min(self._level_index + 1, len(self._levels) - 1)
