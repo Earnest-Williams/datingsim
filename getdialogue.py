@@ -18,8 +18,17 @@ class Dialogue(object):
         print(self.messages["greeting"])
 
         dialogue_tree = player.focus_character.dialogue_tree
-        for i in range(len(dialogue_tree)):
-            print(f"{self.messages['level_label']} {i}")
+        if isinstance(dialogue_tree, dict):
+            try:
+                sorted_keys = sorted(dialogue_tree.keys(), key=lambda key: int(key))
+            except (TypeError, ValueError):
+                sorted_keys = list(dialogue_tree.keys())
+            dialogue_steps = [dialogue_tree[key] for key in sorted_keys]
+        else:
+            dialogue_steps = list(dialogue_tree)
+
+        for level, step in enumerate(dialogue_steps):
+            print(f"{self.messages['level_label']} {level}")
             print(f"{self.messages['opinion_label']} {player.focus_character.opinion}")
 
             print(self.messages["choice_prompt"])
@@ -28,36 +37,36 @@ class Dialogue(object):
                 print(
                     1,
                     '-',
-                    dialogue_tree[i]["statement"]["compliment"],
+                    step["statement"]["compliment"],
                 )
                 print(
                     2,
                     '-',
-                    dialogue_tree[i]["statement"]["introduction"],
+                    step["statement"]["introduction"],
                     player.name,
                 )
                 print(
                     3,
                     '-',
-                    dialogue_tree[i]["statement"]["question"],
+                    step["statement"]["question"],
                 )
 
                 statement = input("> ")
 
                 if int(statement) == 1:
-                    print(dialogue_tree[i]["reply"]["compliment"][0])
-                    player.focus_character.opinion += dialogue_tree[i]["reply"][
+                    print(step["reply"]["compliment"][0])
+                    player.focus_character.opinion += step["reply"][
                         "compliment"
                     ][1]
                 elif int(statement) == 2:
                     player.make_acquaintance(player.focus_character)
-                    print(dialogue_tree[i]["reply"]["introduction"][0])
-                    player.focus_character.opinion += dialogue_tree[i]["reply"][
+                    print(step["reply"]["introduction"][0])
+                    player.focus_character.opinion += step["reply"][
                         "introduction"
                     ][1]
                 elif int(statement) == 3:
-                    print(dialogue_tree[i]["reply"]["question"][0])
-                    player.focus_character.opinion += dialogue_tree[i]["reply"][
+                    print(step["reply"]["question"][0])
+                    player.focus_character.opinion += step["reply"][
                         "question"
                     ][1]
             else:
@@ -65,7 +74,7 @@ class Dialogue(object):
                     print(
                         1,
                         '-',
-                        dialogue_tree[i]["statement"]["compliment"],
+                        step["statement"]["compliment"],
                     )
                     print(
                         2,
@@ -75,24 +84,24 @@ class Dialogue(object):
                     print(
                         3,
                         '-',
-                        dialogue_tree[i]["statement"]["question"],
+                        step["statement"]["question"],
                     )
 
                     statement = input("> ")
 
                     if int(statement) == 1:
-                        print(dialogue_tree[i]["reply"]["compliment"][0])
-                        player.focus_character.opinion += dialogue_tree[i]["reply"][
+                        print(step["reply"]["compliment"][0])
+                        player.focus_character.opinion += step["reply"][
                             "compliment"
                         ][1]
                     elif int(statement) == 2:
-                        print(dialogue_tree[i]["reply"]["observation"][0])
-                        player.focus_character.opinion += dialogue_tree[i]["reply"][
+                        print(step["reply"]["observation"][0])
+                        player.focus_character.opinion += step["reply"][
                             "observation"
                         ][1]
                     elif int(statement) == 3:
-                        print(dialogue_tree[i]["reply"]["question"][0])
-                        player.focus_character.opinion += dialogue_tree[i]["reply"][
+                        print(step["reply"]["question"][0])
+                        player.focus_character.opinion += step["reply"][
                             "question"
                         ][1]
 
@@ -100,7 +109,7 @@ class Dialogue(object):
                     print(
                         1,
                         '-',
-                        dialogue_tree[i]["statement"]["compliment"],
+                        step["statement"]["compliment"],
                     )
                     print(
                         2,
@@ -110,25 +119,25 @@ class Dialogue(object):
                     print(
                         3,
                         '-',
-                        dialogue_tree[i]["statement"]["question"],
+                        step["statement"]["question"],
                     )
                     print(4, '-', self.messages["date_offer"])
 
                     statement = input("> ")
 
                     if int(statement) == 1:
-                        print(dialogue_tree[i]["reply"]["compliment"][0])
-                        player.focus_character.opinion += dialogue_tree[i]["reply"][
+                        print(step["reply"]["compliment"][0])
+                        player.focus_character.opinion += step["reply"][
                             "compliment"
                         ][1]
                     elif int(statement) == 2:
-                        print(dialogue_tree[i]["reply"]["observation"][0])
-                        player.focus_character.opinion += dialogue_tree[i]["reply"][
+                        print(step["reply"]["observation"][0])
+                        player.focus_character.opinion += step["reply"][
                             "observation"
                         ][1]
                     elif int(statement) == 3:
-                        print(dialogue_tree[i]["reply"]["question"][0])
-                        player.focus_character.opinion += dialogue_tree[i]["reply"][
+                        print(step["reply"]["question"][0])
+                        player.focus_character.opinion += step["reply"][
                             "question"
                         ][1]
                     elif int(statement) == 4:
