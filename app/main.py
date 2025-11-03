@@ -1,5 +1,6 @@
 """Application entry point."""
 
+import argparse
 import sys
 
 
@@ -29,13 +30,13 @@ def _import_qt_objects():
     return QApplication, MainWindow
 
 
-def _exec_qt_application():
+def _exec_qt_application(qt_args, seed=None):
     """Initialise and run the Qt application."""
 
     QApplication, MainWindow = _import_qt_objects()
 
-    qt_app = QApplication(sys.argv)
-    win = MainWindow()
+    qt_app = QApplication([sys.argv[0], *qt_args])
+    win = MainWindow(seed=seed)
     win.show()
 
     exec_method = getattr(qt_app, "exec", None) or getattr(qt_app, "exec_", None)
@@ -45,9 +46,21 @@ def _exec_qt_application():
     return exec_method()
 
 
-def main():
+def _parse_args(argv):
+    parser = argparse.ArgumentParser(description="Launch the dating sim UI.")
+    parser.add_argument(
+        "--seed",
+        type=int,
+        help="Seed the game for deterministic behaviour.",
+    )
+    return parser.parse_known_args(argv)
+
+
+def main(argv=None):
     _ensure_supported_runtime()
-    sys.exit(_exec_qt_application())
+    argv = sys.argv[1:] if argv is None else argv
+    args, qt_args = _parse_args(argv)
+    sys.exit(_exec_qt_application(qt_args, seed=args.seed))
 
 
 if __name__ == "__main__":

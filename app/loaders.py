@@ -1,8 +1,9 @@
 import os, yaml
-from typing import Dict, Any, List, Tuple
+from typing import Any, Dict
 
 CHAR_PATH = os.path.join("game", "character.yaml")
 KNOW_PATH = os.path.join("game", "knowledge.yaml")
+ASSET_PATH = os.path.join("game", "assets.yaml")
 
 def _safe_load_yaml(path: str) -> Any:
     with open(path, "r", encoding="utf-8") as f:
@@ -28,4 +29,13 @@ def load_knowledge() -> Dict[str, Any]:
     data = _safe_load_yaml(KNOW_PATH)
     for k in ("notes", "factions", "sites", "tech"):
         data.setdefault(k, [])
+    return data
+
+
+def load_assets() -> Dict[str, Any]:
+    data = _safe_load_yaml(ASSET_PATH)
+    data.setdefault("locales", {})
+    data.setdefault("sprites", {})
+    defaults = data.setdefault("defaults", {})
+    defaults.setdefault("background", "assets/locales/classroom_generic.png")
     return data

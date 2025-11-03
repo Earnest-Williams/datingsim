@@ -1,3 +1,5 @@
+from typing import Dict, Optional
+
 from PySide6.QtWidgets import (
     QWidget,
     QHBoxLayout,
@@ -9,9 +11,10 @@ from PySide6.QtWidgets import (
 
 
 class NavOverlay(QWidget):
-    def __init__(self, bus, *args, **kwargs):
+    def __init__(self, bus, ui_strings: Optional[Dict[str, str]] = None, *args, **kwargs):
         super().__init__(*args, **kwargs)
         self.bus = bus
+        ui = ui_strings or {}
         self.setObjectName("nav-overlay")
         self.setStyleSheet(
             "#nav-overlay { background: rgba(14,17,20,220); border-bottom:1px solid #2a2f36; }"
@@ -23,7 +26,8 @@ class NavOverlay(QWidget):
         row = QHBoxLayout()
         root.addLayout(row)
 
-        self.loc = QLabel("—")
+        self._placeholder = ui.get("location_placeholder", "—")
+        self.loc = QLabel(self._placeholder)
         row.addWidget(self.loc)
 
         row.addStretch(1)
@@ -31,11 +35,11 @@ class NavOverlay(QWidget):
         self.exits_bar = QHBoxLayout()
         row.addLayout(self.exits_bar)
 
-        self.who_lbl = QLabel(" Talk: ")
+        self.who_lbl = QLabel(ui.get("talk_label", " Talk: "))
         row.addWidget(self.who_lbl)
         self.who = QComboBox()
         row.addWidget(self.who)
-        talk_btn = QPushButton("Talk")
+        talk_btn = QPushButton(ui.get("talk_button", "Talk"))
         row.addWidget(talk_btn)
 
         talk_btn.clicked.connect(self._emit_talk)
@@ -54,7 +58,8 @@ class NavOverlay(QWidget):
                 widget.deleteLater()
 
     def _render(self, payload: dict):
-        self.loc.setText(f"<b>{payload.get('location', '—')}</b>")
+        loc_label = payload.get("location") or self._placeholder
+        self.loc.setText(f"<b>{loc_label}</b>")
         self._clear_exits()
         for exit_payload in payload.get("exits", []):
             button = QPushButton(exit_payload["label"])
