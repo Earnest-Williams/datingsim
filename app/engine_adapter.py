@@ -1,11 +1,12 @@
 from __future__ import annotations
 
-from typing import Any, Dict, List, Optional, Tuple
-
 import contextlib
 import io
+from copy import deepcopy
+from typing import Any, Dict, List, Optional, Tuple
 
 from app.bus import Bus
+from app.loaders import load_character
 from elements import Character, Engine, Girl
 from girl_definitions import girl_list
 from location_definitions import location_list
@@ -34,6 +35,7 @@ class EngineAdapter:
 
         self.e = Engine()
         self.mc = Character()
+        self._base_stats = load_character()
         self.e.build_locations(location_list)
         self.e.build_girls(girl_list)
 
@@ -108,6 +110,7 @@ class EngineAdapter:
     def apply_choice(self, option_id: int) -> None:
         girl = self._focused()
         if girl is None:
+            self._emit_stats()
             return
         _, level = self._current_level()
 
@@ -140,6 +143,8 @@ class EngineAdapter:
                 elif option_id == 4:
                     self._pending_date = True
 
+        self._emit_stats()
+
         if self._pending_date:
             self._pending_date = False
             self._show_date_choices()
@@ -169,6 +174,7 @@ class EngineAdapter:
                 self.mc.focus(fallback)
         self._levels = self._ordered_levels()
         self._level_index = 0
+        self._emit_stats()
         self._emit_scene()
 
     def _focused(self) -> Optional[Girl]:
@@ -213,6 +219,21 @@ class EngineAdapter:
         if state.endswith("_state"):
             state = state[: -len("_state")]
         self.bus.state_changed.emit(state)
+
+    def _emit_stats(self) -> None:
+        stats = deepcopy(self._base_stats)
+        stats["name"] = self.mc.name or stats.get("name", "You")
+        stats["level"] = self.mc.__dict__.get("level", stats.get("level", 1))
+        stats["hp"] = self.mc.__dict__.get("hp", stats.get("hp", 1))
+        stats["mp"] = self.mc.__dict__.get("mp", stats.get("mp", 0))
+        stats["stamina"] = self.mc.__dict__.get("stamina", stats.get("stamina", 0))
+
+        affinity = stats.get("affinity", {})
+        for girl_name, girl in self.e.girls.items():
+            affinity[girl_name] = girl.opinion
+        stats["affinity"] = affinity
+
+        self.bus.stats_updated.emit(stats)
 
     def _emit_scene(self) -> None:
         loc_name = self.e.current_location.name if self.e.current_location else ""
