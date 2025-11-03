@@ -108,6 +108,7 @@ class EngineAdapter:
     def apply_choice(self, option_id: int) -> None:
         girl = self._focused()
         if girl is None:
+            self._emit_stats()
             return
         _, level = self._current_level()
 
@@ -140,6 +141,8 @@ class EngineAdapter:
                 elif option_id == 4:
                     self._pending_date = True
 
+        self._emit_stats()
+
         if self._pending_date:
             self._pending_date = False
             self._show_date_choices()
@@ -169,6 +172,7 @@ class EngineAdapter:
                 self.mc.focus(fallback)
         self._levels = self._ordered_levels()
         self._level_index = 0
+        self._emit_stats()
         self._emit_scene()
 
     def _focused(self) -> Optional[Girl]:
@@ -213,6 +217,21 @@ class EngineAdapter:
         if state.endswith("_state"):
             state = state[: -len("_state")]
         self.bus.state_changed.emit(state)
+
+    def _emit_stats(self) -> None:
+        self.bus.stats_updated.emit(
+            {
+                "name": self.mc.name or "You",
+                "level": 1,
+                "hp": self.mc.__dict__.get("hp", 1),
+                "mp": self.mc.__dict__.get("mp", 0),
+                "stamina": self.mc.__dict__.get("stamina", 0),
+                "attrs": {},
+                "skills": {},
+                "conditions": [],
+                "affinity": {},
+            }
+        )
 
     def _emit_scene(self) -> None:
         loc_name = self.e.current_location.name if self.e.current_location else ""
