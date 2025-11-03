@@ -61,13 +61,13 @@ class EngineAdapter:
         self._neutral_sprite = self._sprite_for.get("neutral")
         self._happy_sprite = self._sprite_for.get("happy")
 
-        # Focus a default character so GUI dialogue works.
-        self.focus("tammy")
-
-        # Dialogue traversal state
+        # Dialogue traversal state must exist before any focus/advance calls.
         self._levels: List[Tuple[int, Dict[str, Any]]] = self._ordered_levels()
         self._level_index: int = 0
         self._pending_date = False
+
+        # Focus a default character so GUI dialogue works.
+        self.focus("tammy")
         self._emit_scene()
 
     def _toast(self, *lines: Optional[str]) -> None:
@@ -79,7 +79,7 @@ class EngineAdapter:
 
     # -------- GUI API --------
     def next_dialogue_payload(self) -> Dict[str, Any]:
-        if self._pending_date:
+        if getattr(self, "_pending_date", False):
             return self._prepare_date_choices()
 
         girl = self._focused()
