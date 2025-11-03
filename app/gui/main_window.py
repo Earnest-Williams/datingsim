@@ -1,11 +1,11 @@
-from PySide6.QtWidgets import QWidget, QLabel
-from PySide6.QtCore import Qt
+from PySide6.QtWidgets import QWidget
 from app.bus import Bus
 from app.engine_adapter import EngineAdapter
 from app.gui.sliding_pane import SlidingPane
 from app.gui.bottom_overlay import BottomOverlay
 from app.gui.character_pane import CharacterPane
 from app.gui.knowledge_pane import KnowledgePane
+from app.gui.scene import CenterScene
 from app.loaders import load_character, load_knowledge
 
 class MainWindow(QWidget):
@@ -14,12 +14,12 @@ class MainWindow(QWidget):
         self.setWindowTitle("CRPG–VN Hybrid (Long Twilight)")
         self.setMinimumSize(1280, 720)
         self.bus = Bus()
-        self.engine = EngineAdapter(self.bus)
 
-        # Center scene placeholder
-        self.scene = QLabel("Scene", self)
-        self.scene.setAlignment(Qt.AlignCenter)
-        self.scene.setStyleSheet("background:#0e1114; color:#d6a86b; font-size:20px;")
+        # Center scene (background + sprite)
+        self.scene = CenterScene(self)
+        self.bus.scene_changed.connect(self._update_scene)
+
+        self.engine = EngineAdapter(self.bus)
 
         # Panes
         char_data = load_character()
@@ -75,6 +75,10 @@ class MainWindow(QWidget):
                       activated=lambda i=n: self.bus.option_chosen.emit(i))
 
         self.bus.option_chosen.connect(self.choose)
+
+    def _update_scene(self, payload: dict):
+        self.scene.set_background(payload.get("bg"))
+        self.scene.set_sprite(payload.get("sprite"))
 
     def resizeEvent(self, _):
         r = self.rect()
