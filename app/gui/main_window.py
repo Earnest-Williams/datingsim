@@ -3,6 +3,7 @@ from app.bus import Bus
 from app.engine_adapter import EngineAdapter
 from app.gui.sliding_pane import SlidingPane
 from app.gui.bottom_overlay import BottomOverlay
+from app.gui.nav_overlay import NavOverlay
 from app.gui.character_pane import CharacterPane
 from app.gui.knowledge_pane import KnowledgePane
 from app.gui.scene import CenterScene
@@ -20,6 +21,8 @@ class MainWindow(QWidget):
         self.bus.scene_changed.connect(self._update_scene)
 
         self.engine = EngineAdapter(self.bus)
+
+        self.nav = NavOverlay(self.bus, parent=self)
 
         # Panes
         char_data = load_character()
@@ -47,7 +50,12 @@ class MainWindow(QWidget):
         # Hotkeys
         self._bind_hotkeys()
 
+        # Signal plumbing
+        self.bus.travel_chosen.connect(self._travel)
+        self.bus.talk_to.connect(self._talk)
+
         # First dialogue payload to demonstrate overlay
+        self.engine.next_dialogue_payload()
         self.advance()
 
     def _emit_character(self, c):
@@ -84,7 +92,10 @@ class MainWindow(QWidget):
         r = self.rect()
         # layout: scene fills, panes float, overlay at bottom
         self.scene.setGeometry(0, 0, r.width(), r.height())
-        self.left.reposition(r); self.right.reposition(r); self.overlay.resize_to(r, 240)
+        self.left.reposition(r)
+        self.right.reposition(r)
+        self.nav.setGeometry(0, 0, r.width(), 64)
+        self.overlay.resize_to(r, 240)
 
     def toggle_left(self):  self.left.toggle(self.rect())
     def toggle_right(self): self.right.toggle(self.rect())
@@ -95,4 +106,11 @@ class MainWindow(QWidget):
 
     def choose(self, option_id: int):
         self.engine.apply_choice(option_id)
+        self.advance()
+
+    def _travel(self, exit_key: str):
+        self.engine.travel_to(exit_key)
+
+    def _talk(self, girl_name: str):
+        self.engine.focus(girl_name)
         self.advance()
