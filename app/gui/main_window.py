@@ -167,7 +167,14 @@ class MainWindow(QWidget):
                 self.engine.advance_dialogue()
         except Exception as exc:  # pragma: no cover - UI safety net
             self._logger.exception("Failed to initialise engine")
-            self.bus.toast.emit(str(exc))
+            msg = f"Engine initialisation failed:\n{exc}"
+            self.bus.toast.emit(msg)
+            try:
+                from PySide6.QtWidgets import QMessageBox
+
+                QMessageBox.critical(self, "Startup Error", msg)
+            except Exception:
+                pass
             self.engine = None
 
     def _emit_character(self, c):
