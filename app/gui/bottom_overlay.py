@@ -76,6 +76,10 @@ class BottomOverlay(QWidget):
     def show_toast(self, message: str):
         self.toast.setVisible(bool(message))
         self.toast.setText(message)
+        # ensure the panel is visible when a toast arrives (e.g., init errors)
+        parent = self.parent()
+        if parent is not None:
+            self.show_panel(parent.rect())
         if self.history.isVisible():
             self.history.scrollToBottom()
 
