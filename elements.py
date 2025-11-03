@@ -69,15 +69,15 @@ class Engine(object):
     #Engine Setup functions
     def introduction(self, text):
         time.sleep(0.5)
-        print text
+        print(text)
         
     def build_locations(self, location_list):
-        for key, value in location_list.iteritems():
+        for key, value in location_list.items():
             obj = Location(key, value['destinations'], value['description'], value['date_description'], value['verbs'], value['nouns'], value['inactive_verbs'], value['observations'], value['experience_gained'])
             self.locations[key] = obj
             
     def build_girls(self, girl_list):
-        for key, value in girl_list.iteritems():
+        for key, value in girl_list.items():
             obj = Girl(key, value['love'], value['prude'], value['meet_at'], value['see_at'], value['affinity'], value['dialogue_tree'])
             self.girls[key] = obj
             
@@ -112,28 +112,28 @@ class Character(object):
         if name:
             self.name = name
         else:
-            print "What is your name?"
-            self.name = raw_input("> ")
+            print("What is your name?")
+            self.name = input("> ")
     
     def make_acquaintance(self, girl):
         self.known_girls.append(girl.name)
         #return "My name is %s." % self.name
         
     def reflect(self):
-        print "My name is", self.name
-        print "My known locations are: "+str(self.known_locations)
+        print("My name is", self.name)
+        print("My known locations are: "+str(self.known_locations))
         
     def commit(self, girl):
-        print "Would you like to commit to her?"
+        print("Would you like to commit to her?")
         if self.commits > 0:
-            commit = raw_input("> ")
+            commit = input("> ")
             if commit == "yes":
                 self.committed_to = girl.name
-                print "I'm committed to", self.committed_to
+                print("I'm committed to", self.committed_to)
                 girl.committed_in = True
                 self.commits -= 1
         else:
-            print "No more commits left."
+            print("No more commits left.")
 
 class Girl(object):
     def __init__(self, name, love_count, prude, meet_at, see_at, affinity, dialogue_tree):
