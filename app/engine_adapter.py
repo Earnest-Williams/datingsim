@@ -36,6 +36,7 @@ class EngineAdapter:
         self.e = Engine()
         self.mc = Character()
         self._base_stats = load_character()
+        self._stats_snapshot: Dict[str, Any] = deepcopy(self._base_stats)
         self.e.build_locations(location_list)
         self.e.build_girls(girl_list)
 
@@ -221,19 +222,19 @@ class EngineAdapter:
         self.bus.state_changed.emit(state)
 
     def _emit_stats(self) -> None:
-        stats = deepcopy(self._base_stats)
-        stats["name"] = self.mc.name or stats.get("name", "You")
+        stats = self._stats_snapshot
+
+        stats["name"] = self.mc.name or self._base_stats.get("name", "You")
         stats["level"] = self.mc.__dict__.get("level", stats.get("level", 1))
         stats["hp"] = self.mc.__dict__.get("hp", stats.get("hp", 1))
         stats["mp"] = self.mc.__dict__.get("mp", stats.get("mp", 0))
         stats["stamina"] = self.mc.__dict__.get("stamina", stats.get("stamina", 0))
 
-        affinity = stats.get("affinity", {})
+        affinity = stats.setdefault("affinity", {})
         for girl_name, girl in self.e.girls.items():
             affinity[girl_name] = girl.opinion
-        stats["affinity"] = affinity
 
-        self.bus.stats_updated.emit(stats)
+        self.bus.stats_updated.emit(deepcopy(stats))
 
     def _emit_scene(self) -> None:
         loc_name = self.e.current_location.name if self.e.current_location else ""
