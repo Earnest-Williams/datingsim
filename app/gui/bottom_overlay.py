@@ -39,8 +39,10 @@ class BottomOverlay(QWidget):
 
     def clear_choices(self):
         while self.choices.count():
-            w = self.choices.itemAt(0).widget()
-            if w: w.setParent(None)
+            item = self.choices.takeAt(0)
+            widget = item.widget()
+            if widget:
+                widget.deleteLater()
 
     def show_dialogue(self, payload: dict):
         self.speaker.setText(payload.get("speaker", ""))
