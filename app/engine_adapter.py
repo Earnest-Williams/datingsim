@@ -11,27 +11,7 @@ from girl_definitions import girl_list
 from location_definitions import location_list
 from locationobj import activate_location
 from script_loader import load_script
-
-
-class _NullInput:
-    """Minimal object to satisfy activate_location vocabulary wiring."""
-
-    verb: List[str] = []
-    direction: List[str] = []
-    noun: List[str] = []
-    inactive_verb: List[str] = []
-    character: List[str] = []
-    vocab = {
-        "verb": verb,
-        "direction": direction,
-        "noun": noun,
-        "inactive_verb": inactive_verb,
-        "character": character,
-    }
-
-    def help(self) -> None:  # pragma: no cover - compatibility stub
-        pass
-
+from getinputobject import Input
 
 class EngineAdapter:
     """Bridge the legacy engine with the Qt GUI overlay."""
@@ -52,7 +32,7 @@ class EngineAdapter:
 
         self.mc.get_name("Protagonist")
         with self._quiet():
-            activate_location(self.e, "residential district", _NullInput(), self.mc)
+            activate_location(self.e, "residential district", Input(), self.mc)
             self.e.start_day()
 
         # Background/sprite asset maps.
@@ -163,6 +143,15 @@ class EngineAdapter:
             self.e.start_day()
         self._emit_scene()
 
+    def travel_to(self, exit_key: str) -> None:
+        if not self.e.current_location:
+            return
+        _inp = Input()
+        with self._quiet():
+            activate_location(self.e, exit_key, _inp, self.mc)
+            self.e.start_day()
+        self._emit_scene()
+
     # -------- internals --------
     def focus(self, girl_name: str) -> None:
         try:
@@ -196,6 +185,28 @@ class EngineAdapter:
         loc = self.e.current_location
         return loc.observations[0] if loc and loc.observations else "…"
 
+    def _snapshot_nav(self) -> Dict[str, Any]:
+        loc = self.e.current_location
+        exits: List[Dict[str, str]] = []
+        if loc:
+            for label in loc.destinations.keys():
+                exits.append({"id": label, "label": label})
+        chars = list(loc.characters) if loc else []
+        return {
+            "location": loc.name if loc else "",
+            "exits": exits,
+            "characters": chars,
+        }
+
+    def _emit_nav(self) -> None:
+        self.bus.nav_ready.emit(self._snapshot_nav())
+
+    def _emit_state(self) -> None:
+        state = str(self.e.state)
+        if state.endswith("_state"):
+            state = state[: -len("_state")]
+        self.bus.state_changed.emit(state)
+
     def _emit_scene(self) -> None:
         loc_name = self.e.current_location.name if self.e.current_location else ""
         bg = self._bg_by_loc.get(loc_name, "assets/locales/classroom_generic.png")
@@ -208,6 +219,8 @@ class EngineAdapter:
                 else self._sprite_for["neutral"]
             )
         self.bus.scene_changed.emit({"bg": bg, "sprite": sprite})
+        self._emit_nav()
+        self._emit_state()
 
     def _show_date_choices(self) -> None:
         choices = self.dialogue_text["date_choices"]
