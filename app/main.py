@@ -17,20 +17,35 @@ def _ensure_supported_runtime():
         )
 
 def _setup_logging() -> None:
-    cache_dir = Path(".cache")
-    cache_dir.mkdir(parents=True, exist_ok=True)
-    log_path = cache_dir / "datingsim.log"
-    handler = RotatingFileHandler(
-        log_path,
-        maxBytes=1_048_576,
-        backupCount=3,
-        encoding="utf-8",
-    )
+    handlers = []
+    fallback_error = None
+
+    try:
+        cache_dir = Path(".cache")
+        cache_dir.mkdir(parents=True, exist_ok=True)
+        log_path = cache_dir / "datingsim.log"
+        handlers.append(
+            RotatingFileHandler(
+                log_path,
+                maxBytes=1_048_576,
+                backupCount=3,
+                encoding="utf-8",
+            )
+        )
+    except OSError as exc:
+        fallback_error = exc
+        handlers.append(logging.StreamHandler())
+
     logging.basicConfig(
         level=logging.INFO,
         format="%(asctime)s %(levelname)s %(name)s: %(message)s",
-        handlers=[handler],
+        handlers=handlers,
     )
+
+    if fallback_error is not None:
+        logging.getLogger(__name__).warning(
+            "File logging disabled; falling back to stderr: %s", fallback_error
+        )
 
 
 def _import_qt_objects():
