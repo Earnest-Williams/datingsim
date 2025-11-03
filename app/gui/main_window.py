@@ -1,41 +1,74 @@
-from PySide6.QtWidgets import QWidget
+from __future__ import annotations
+
+from typing import Optional
+
+from PySide6.QtCore import Qt
+from PySide6.QtGui import QAction, QKeySequence, QShortcut
+from PySide6.QtWidgets import QInputDialog, QWidget
+
 from app.bus import Bus
 from app.engine_adapter import EngineAdapter
-from app.gui.sliding_pane import SlidingPane
 from app.gui.bottom_overlay import BottomOverlay
-from app.gui.nav_overlay import NavOverlay
 from app.gui.character_pane import CharacterPane
 from app.gui.knowledge_pane import KnowledgePane
+from app.gui.nav_overlay import NavOverlay
 from app.gui.scene import CenterScene
+from app.gui.sliding_pane import SlidingPane
 from app.loaders import load_character, load_knowledge
+from script_loader import load_script
+
 
 class MainWindow(QWidget):
-    def __init__(self):
+    def __init__(self, seed: Optional[int] = None):
         super().__init__()
-        self.setWindowTitle("CRPG–VN Hybrid (Long Twilight)")
         self.setMinimumSize(1280, 720)
         self.bus = Bus()
+
+        self.script = load_script()
+        self.ui_strings = self.script.get("ui", {})
+        main_ui = self.ui_strings.get("main_window", {})
+        self.setWindowTitle(main_ui.get("title", "CRPG–VN Hybrid (Long Twilight)"))
 
         # Center scene (background + sprite)
         self.scene = CenterScene(self)
         self.bus.scene_changed.connect(self._update_scene)
 
-        self.engine = EngineAdapter(self.bus)
-
-        self.nav = NavOverlay(self.bus, parent=self)
+        # UI overlays
+        self.nav = NavOverlay(
+            self.bus,
+            ui_strings=self.ui_strings.get("nav_overlay"),
+            parent=self,
+        )
 
         # Panes
         char_data = load_character()
         know_data = load_knowledge()
 
-        self.left = SlidingPane("left", width_px=360, title=char_data.get("name","You"), parent=self)
-        self.right = SlidingPane("right", width_px=420, title="Knowledge", parent=self)
+        self.left = SlidingPane(
+            "left",
+            width_px=360,
+            title=char_data.get("name", "You"),
+            parent=self,
+        )
+        knowledge_title = main_ui.get("knowledge_title", "Knowledge")
+        self.right = SlidingPane(
+            "right",
+            width_px=420,
+            title=knowledge_title,
+            parent=self,
+        )
 
-        self.char_pane = CharacterPane(parent=self.left)
+        self.char_pane = CharacterPane(
+            parent=self.left,
+            ui_strings=self.ui_strings.get("character_pane"),
+        )
         self.char_pane.bind_bus(self.bus)
         self.left.content.addWidget(self.char_pane)
 
-        self.know_pane = KnowledgePane(parent=self.right)
+        self.know_pane = KnowledgePane(
+            parent=self.right,
+            ui_strings=self.ui_strings.get("knowledge_pane"),
+        )
         self.know_pane.bind_bus(self.bus)
         self.right.content.addWidget(self.know_pane)
 
@@ -54,34 +87,83 @@ class MainWindow(QWidget):
         self.bus.travel_chosen.connect(self._travel)
         self.bus.talk_to.connect(self._talk)
 
-        # First dialogue payload to demonstrate overlay
+        # Deterministic seed controls
+        self.setContextMenuPolicy(Qt.ActionsContextMenu)
+        self._seed: Optional[int] = None
+        self._deterministic_action = self._create_deterministic_action()
+
+        # Engine setup
+        self.engine: Optional[EngineAdapter] = None
+        self._init_engine(seed)
+
+    def _create_deterministic_action(self) -> QAction:
+        determinism_ui = self.ui_strings.get("determinism", {})
+        label = determinism_ui.get("action_label")
+        if not label:
+            label = self.ui_strings.get("main_window", {}).get(
+                "deterministic_seed_action",
+                "Deterministic Seed",
+            )
+        action = QAction(label, self)
+        shortcut = determinism_ui.get("deterministic_seed_shortcut")
+        if not shortcut:
+            shortcut = self.ui_strings.get("main_window", {}).get(
+                "deterministic_seed_shortcut",
+                "Ctrl+D",
+            )
+        if shortcut:
+            action.setShortcut(shortcut)
+        action.triggered.connect(self._prompt_deterministic_seed)
+        self.addAction(action)
+        return action
+
+    def _prompt_deterministic_seed(self) -> None:
+        determinism_ui = self.ui_strings.get("determinism", {})
+        title = determinism_ui.get("dialog_title", "Deterministic Seed")
+        prompt = determinism_ui.get(
+            "dialog_prompt", "Enter a seed for deterministic simulation:"
+        )
+        current = self._seed if self._seed is not None else 0
+        seed, ok = QInputDialog.getInt(self, title, prompt, current)
+        if ok:
+            self._seed = seed
+            self._init_engine(seed)
+            toast = determinism_ui.get("toast", "")
+            if toast:
+                self.bus.toast.emit(toast.format(seed=seed))
+
+    def _init_engine(self, seed: Optional[int]) -> None:
+        self._seed = seed
+        self.engine = EngineAdapter(self.bus, seed=seed)
         self.engine.advance_dialogue()
 
     def _emit_character(self, c):
         snap = {
-            "name": c.get("name","You"),
-            "level": c.get("level",1),
-            "hp": c.get("hp",1),
-            "mp": c.get("mp",0),
-            "stamina": c.get("stamina",0),
-            "attrs": c.get("attrs",{}),
-            "skills": c.get("skills",{}),
-            "conditions": c.get("conditions",[]),
-            "affinity": c.get("affinity",{}),
+            "name": c.get("name", "You"),
+            "level": c.get("level", 1),
+            "hp": c.get("hp", 1),
+            "mp": c.get("mp", 0),
+            "stamina": c.get("stamina", 0),
+            "attrs": c.get("attrs", {}),
+            "skills": c.get("skills", {}),
+            "conditions": c.get("conditions", []),
+            "affinity": c.get("affinity", {}),
         }
         self.bus.stats_updated.emit(snap)
 
     def _bind_hotkeys(self):
-        from PySide6.QtGui import QShortcut, QKeySequence
         QShortcut(QKeySequence("Tab"), self, activated=self.toggle_left)
         QShortcut(QKeySequence("Shift+Tab"), self, activated=self.toggle_right)
         QShortcut(QKeySequence("Space"), self, activated=self.advance)
         QShortcut(QKeySequence("Ctrl+S"), self, activated=self._save)
         QShortcut(QKeySequence("Ctrl+L"), self, activated=self._load)
         # numeric choices 1..9
-        for n in range(1,10):
-            QShortcut(QKeySequence(str(n)), self,
-                      activated=lambda i=n: self.bus.option_chosen.emit(i))
+        for n in range(1, 10):
+            QShortcut(
+                QKeySequence(str(n)),
+                self,
+                activated=lambda i=n: self.bus.option_chosen.emit(i),
+            )
 
         self.bus.option_chosen.connect(self.choose)
 
@@ -98,23 +180,32 @@ class MainWindow(QWidget):
         self.nav.setGeometry(0, 0, r.width(), 64)
         self.overlay.resize_to(r, 240)
 
-    def toggle_left(self):  self.left.toggle(self.rect())
-    def toggle_right(self): self.right.toggle(self.rect())
+    def toggle_left(self):
+        self.left.toggle(self.rect())
+
+    def toggle_right(self):
+        self.right.toggle(self.rect())
 
     def advance(self):
-        self.engine.advance_dialogue()
+        if self.engine:
+            self.engine.advance_dialogue()
 
     def choose(self, option_id: int):
-        self.engine.apply_choice(option_id)
+        if self.engine:
+            self.engine.apply_choice(option_id)
 
     def _travel(self, exit_key: str):
-        self.engine.travel_to(exit_key)
+        if self.engine:
+            self.engine.travel_to(exit_key)
 
     def _talk(self, girl_name: str):
-        self.engine.focus(girl_name)
+        if self.engine:
+            self.engine.focus(girl_name)
 
     def _save(self):
-        self.engine.save()
+        if self.engine:
+            self.engine.save()
 
     def _load(self):
-        self.engine.load()
+        if self.engine:
+            self.engine.load()

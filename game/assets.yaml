@@ -1,0 +1,11 @@
+locales:
+  residential district: assets/locales/classroom_generic.png
+  club: assets/locales/classroom_generic.png
+  restaurant: assets/locales/classroom_generic.png
+  city: assets/locales/classroom_generic.png
+  school: assets/locales/Library_Nook.png
+sprites:
+  neutral: assets/girls/Alice/Alice_Neutral_Transparent.png
+  happy: assets/girls/Alice/Alice_Happy_Transparent.png
+defaults:
+  background: assets/locales/classroom_generic.png

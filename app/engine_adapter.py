@@ -7,7 +7,7 @@ from typing import Any, Dict, List, Optional, Tuple
 import yaml
 
 from app.bus import Bus
-from app.loaders import load_character
+from app.loaders import load_character, load_assets
 from elements import Character, Engine, Girl
 from girl_definitions import girl_list
 from location_definitions import location_list
@@ -30,6 +30,10 @@ class EngineAdapter:
         self.script = load_script()
         self.dialogue_text = self.script["dialogue"]
         self.dialogue_trees = self.script["dialogue_trees"]
+        self.ui_text = self.script.get("ui", {})
+        self._general_ui = self.ui_text.get("general", {})
+        self._dialogue_ui = self.ui_text.get("dialogue", {})
+        self._nav_ui = self.ui_text.get("nav_overlay", {})
 
         self.e = Engine()
         self.mc = Character()
@@ -44,18 +48,15 @@ class EngineAdapter:
             day_message = self.e.start_day()
         self._toast(*arrival, day_message)
 
-        # Background/sprite asset maps.
-        self._bg_by_loc: Dict[str, str] = {
-            "residential district": "assets/locales/classroom_generic.png",
-            "club": "assets/locales/classroom_generic.png",
-            "restaurant": "assets/locales/classroom_generic.png",
-            "city": "assets/locales/classroom_generic.png",
-            "school": "assets/locales/Library_Nook.png",
-        }
-        self._sprite_for: Dict[str, str] = {
-            "neutral": "assets/girls/Alice/Alice_Neutral_Transparent.png",
-            "happy": "assets/girls/Alice/Alice_Happy_Transparent.png",
-        }
+        assets = load_assets()
+        self._bg_by_loc = dict(assets.get("locales", {}))
+        self._sprite_for = dict(assets.get("sprites", {}))
+        defaults = assets.get("defaults", {})
+        self._default_bg = defaults.get(
+            "background", "assets/locales/classroom_generic.png"
+        )
+        self._neutral_sprite = self._sprite_for.get("neutral")
+        self._happy_sprite = self._sprite_for.get("happy")
 
         # Focus a default character so GUI dialogue works.
         self.focus("tammy")
@@ -75,10 +76,12 @@ class EngineAdapter:
     def next_dialogue_payload(self) -> Dict[str, Any]:
         girl = self._focused()
         if girl is None:
+            empty_state = self._dialogue_ui.get("empty_scene", {})
+            continue_label = self._general_ui.get("continue_label", "Continue")
             return {
-                "speaker": "",
-                "text": "No one is here.",
-                "options": [{"id": 1, "label": "Continue"}],
+                "speaker": empty_state.get("speaker", ""),
+                "text": empty_state.get("text", "No one is here."),
+                "options": [{"id": 1, "label": continue_label}],
             }
 
         speaker = girl.name.title()
@@ -245,7 +248,9 @@ class EngineAdapter:
 
     def _random_observation(self) -> str:
         loc = self.e.current_location
-        return loc.observations[0] if loc and loc.observations else "…"
+        if loc and loc.observations:
+            return loc.observations[0]
+        return self._general_ui.get("ellipsis", "…")
 
     def _snapshot_nav(self) -> Dict[str, Any]:
         loc = self.e.current_location
@@ -255,7 +260,7 @@ class EngineAdapter:
                 exits.append({"id": label, "label": label})
         chars = list(loc.characters) if loc else []
         return {
-            "location": loc.name if loc else "",
+            "location": loc.name if loc else self._nav_ui.get("location_placeholder", ""),
             "exits": exits,
             "characters": chars,
         }
@@ -288,21 +293,21 @@ class EngineAdapter:
 
     def _emit_scene(self) -> None:
         loc_name = self.e.current_location.name if self.e.current_location else ""
-        bg = self._bg_by_loc.get(loc_name, "assets/locales/classroom_generic.png")
+        bg = self._bg_by_loc.get(loc_name, self._default_bg)
         sprite: Optional[str] = None
         girl = self._focused()
         if girl:
-            sprite = (
-                self._sprite_for["happy"]
-                if girl.opinion >= 2
-                else self._sprite_for["neutral"]
-            )
+            if girl.opinion >= 2 and self._happy_sprite:
+                sprite = self._happy_sprite
+            elif self._neutral_sprite:
+                sprite = self._neutral_sprite
         self.bus.scene_changed.emit({"bg": bg, "sprite": sprite})
         self._emit_nav()
         self._emit_state()
 
     def _show_date_choices(self) -> None:
         choices = self.dialogue_text["date_choices"]
+        continue_label = self._general_ui.get("continue_label", "Continue")
         payload = {
             "speaker": self._focused().name.title() if self._focused() else "",
             "text": f"{self.dialogue_text['date_invite']}",
@@ -330,7 +335,7 @@ class EngineAdapter:
                 {
                     "speaker": self._focused().name.title() if self._focused() else "",
                     "text": self.dialogue_text["date_confirmation"],
-                    "options": [{"id": 1, "label": "Continue"}],
+                    "options": [{"id": 1, "label": continue_label}],
                 }
             )
 

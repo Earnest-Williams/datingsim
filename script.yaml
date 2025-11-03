@@ -127,3 +127,44 @@ girls:
     dialogue_tree: default
   donika:
     dialogue_tree: default
+ui:
+  general:
+    placeholder: "—"
+    continue_label: Continue
+    ellipsis: "…"
+    inventory_entry_format: "{name} ×{qty}"
+    list_join: ", "
+  main_window:
+    title: "CRPG–VN Hybrid (Long Twilight)"
+    knowledge_title: Knowledge
+    deterministic_seed_action: Deterministic Seed
+    deterministic_seed_shortcut: Ctrl+D
+  dialogue:
+    empty_scene:
+      speaker: ""
+      text: No one is here.
+  nav_overlay:
+    talk_button: Talk
+    talk_label: " Talk: "
+    location_placeholder: "—"
+  character_pane:
+    level_format: "Level {level}"
+    hp_format: "HP %v"
+    mp_format: "MP %v"
+    stamina_format: "STA %v"
+    attributes_title: Attributes
+    skills_title: Skills
+    conditions_title: Conditions
+    inventory_title: Inventory
+    placeholder: "—"
+    list_join: ", "
+  knowledge_pane:
+    notes_tab: Notes
+    factions_tab: Factions & Enclaves
+    sites_tab: Sites & Rumours
+    tech_tab: Tech & Lore
+    entry_joiner: " — "
+  determinism:
+    dialog_title: Deterministic Seed
+    dialog_prompt: Enter a seed for deterministic simulation:
+    toast: Deterministic seed set to {seed}.
