@@ -1,16 +1,23 @@
 from copy import deepcopy
 from script_loader import load_script
 
+DEFAULT_DIALOGUE_TREE = "default"
+
 _script = load_script()
-_dialogue_trees = _script["dialogue_trees"]
-_girl_dialogues = _script["girls"]
+_dialogue_trees = _script.get("dialogue_trees", {})
+_girl_dialogues = _script.get("girls", {})
 
 
 def _dialogue_tree_for(girl_name):
-    try:
-        tree_name = _girl_dialogues[girl_name]["dialogue_tree"]
-    except KeyError as exc:
-        raise KeyError(f"No dialogue tree configured for girl '{girl_name}'.") from exc
+    tree_name = DEFAULT_DIALOGUE_TREE
+
+    girl_config = _girl_dialogues.get(girl_name)
+    if girl_config is not None:
+        tree_name = girl_config.get("dialogue_tree", DEFAULT_DIALOGUE_TREE)
+    elif DEFAULT_DIALOGUE_TREE not in _dialogue_trees:
+        raise KeyError(
+            f"No dialogue tree configured for girl '{girl_name}', and no default tree defined."
+        )
 
     try:
         return deepcopy(_dialogue_trees[tree_name])
