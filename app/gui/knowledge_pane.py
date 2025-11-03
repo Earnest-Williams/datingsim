@@ -6,6 +6,7 @@ from PySide6.QtWidgets import (
     QListWidget,
     QListWidgetItem,
     QTabWidget,
+    QLabel,
 )
 
 class KnowledgePane(QWidget):
@@ -19,20 +20,28 @@ class KnowledgePane(QWidget):
         self.factions = QListWidget()
         self.sites = QListWidget()
         self.tech = QListWidget()
+        self.status = QLabel(ui.get("status_placeholder", ""))
+        self._travel_format = ui.get("travel_format", "Going to: {destination}")
         self.tabs.addTab(self.notes, ui.get("notes_tab", "Notes"))
         self.tabs.addTab(self.factions, ui.get("factions_tab", "Factions & Enclaves"))
         self.tabs.addTab(self.sites, ui.get("sites_tab", "Sites & Rumours"))
         self.tabs.addTab(self.tech, ui.get("tech_tab", "Tech & Lore"))
         root.addWidget(self.tabs)
+        root.addWidget(self.status)
 
     def bind_bus(self, bus):
         bus.knowledge_updated.connect(self.update_knowledge)
+        bus.travel_chosen.connect(self.update_status)
 
     def update_knowledge(self, k):
         def fill(lst, items, key_order):
             lst.clear()
             for e in items:
-                parts = [str(e.get(k,"")) for k in key_order if e.get(k) is not None]
+                parts = [
+                    str(e.get(key, ""))
+                    for key in key_order
+                    if e.get(key) is not None
+                ]
                 QListWidgetItem(
                     self._joiner.join(p for p in parts if p),
                     lst,
@@ -42,3 +51,6 @@ class KnowledgePane(QWidget):
         fill(self.factions, k.get("factions", []), ["name", "summary"])
         fill(self.sites, k.get("sites", []), ["name", "summary"])
         fill(self.tech, k.get("tech", []), ["name", "summary"])
+
+    def update_status(self, destination: str):
+        self.status.setText(self._travel_format.format(destination=destination))

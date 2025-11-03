@@ -10,6 +10,7 @@ class Bus(QObject):
     inventory_updated = Signal(list)      # [{id,name,qty},...]
     knowledge_updated = Signal(dict)      # {notes,factions,sites,tech}
     toast = Signal(str)
+    toast_history = Signal(list)
 
     # UI → Engine
     option_chosen = Signal(int)

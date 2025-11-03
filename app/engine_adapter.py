@@ -1,8 +1,9 @@
 from __future__ import annotations
 
 import os
+from collections import deque
 from copy import deepcopy
-from typing import Any, Dict, List, Optional, Tuple
+from typing import Any, Deque, Dict, List, Optional, Tuple
 
 import yaml
 
@@ -22,6 +23,8 @@ class EngineAdapter:
 
     def __init__(self, bus: Bus, *, seed: Optional[int] = None):
         self.bus = bus
+        self._toast_history: Deque[str] = deque(maxlen=20)
+        self.bus.toast_history.emit(list(self._toast_history))
         if seed is not None:
             set_location_random_seed(seed)
             set_dialogue_random_seed(seed)
@@ -70,6 +73,8 @@ class EngineAdapter:
     def _toast(self, *lines: Optional[str]) -> None:
         message = "\n".join(line for line in lines if line)
         if message.strip():
+            self._toast_history.append(message)
+            self.bus.toast_history.emit(list(self._toast_history))
             self.bus.toast.emit(message)
 
     # -------- GUI API --------
