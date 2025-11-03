@@ -172,7 +172,6 @@ class EngineAdapter:
 
         if self._pending_date:
             self._emit_scene()
-            self.advance_dialogue()
             return
 
         self._level_index = min(self._level_index + 1, len(self._levels) - 1)
