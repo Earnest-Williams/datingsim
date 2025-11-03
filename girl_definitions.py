@@ -1,668 +1,93 @@
-girl_list = {
-    "tammy":{
-        "love":15,
-        "prude":"easy",
-        'affinity':'club',
-        'meet_at':'bar',
-        'see_at':['bar', 'night life district', 'historic district'],
-        'dialogue_tree':{
-            0:{
-                'statement':{
-                    'compliment':"Your work from last week was really good.",
-                    'introduction': 'Hi, my name is',
-                    'question': 'Do you know where I can have some copies of this document made?'
-                },
-                'reply':{
-                    'compliment':["Thank you. Thats really nice of you to say.",1],
-                    'introduction': ["Um.. That's nice.",0],
-                    'question': ["I'm too busy.",-1],
-                    'observation':['Yeah....', 0]
-                }
-            },
-            1:{
-                'statement':{
-                    'compliment':"You look really pretty.",
-                    'introduction': 'Hi, my name is',
-                    'question': 'Do you know where I can have some copies of this document made?'
-                },
-                'reply':{
-                    'compliment':["Thank you. Thats really nice of you to say.",-1],
-                    'introduction': ["It's nice to meet you.",1],
-                    'question': ["I'm too busy.",0],
-                    'observation':['Yeah....', 0]
-                }
-            },
-            2:{
-                'statement':{
-                    'compliment':"You look really pretty.",
-                    'introduction': 'Hi, my name is',
-                    'question': 'Do you know where I can have some copies of this document made?'
-                },
-                'reply':{
-                    'compliment':["Thank you. Thats really nice of you to say.",0],
-                    'introduction': ["Um.. That's nice.",1],
-                    'question': ["Sure, the copy machine is right over here. I will show you.",1],
-                    'observation':['Yeah....', 0]
-                }
-            },
-            3:{
-                'statement':{
-                    'compliment':"You look really pretty.",
-                    'introduction': 'Hi, my name is',
-                    'question': 'Do you know where I can have some copies of this document made?'
-                },
-                'reply':{
-                    'compliment':["Thank you. Thats really nice of you to say.",-1],
-                    'introduction': ["Um.. That's nice.",1],
-                    'question': ["I'm too busy.",0],
-                    'observation':['Yeah....', 0]
-                }
-            },
-            4:{
-                'statement':{
-                    'compliment':"You look really pretty.",
-                    'introduction': 'Hi, my name is',
-                    'question': 'Do you know where I can have some copies of this document made?'
-                },
-                'reply':{
-                    'compliment':["Thank you. Thats really nice of you to say.",0],
-                    'introduction':[ "Um.. That's nice.",1],
-                    'question': ["I'm too busy.",0],
-                    'observation':['Yeah....', 0],
-                }
-            }
-        }
+from copy import deepcopy
+from script_loader import load_script
+
+_script = load_script()
+_dialogue_trees = _script["dialogue_trees"]
+_girl_dialogues = _script["girls"]
+
+
+def _dialogue_tree_for(girl_name):
+    try:
+        tree_name = _girl_dialogues[girl_name]["dialogue_tree"]
+    except KeyError as exc:
+        raise KeyError(f"No dialogue tree configured for girl '{girl_name}'.") from exc
+
+    try:
+        return deepcopy(_dialogue_trees[tree_name])
+    except KeyError as exc:
+        raise KeyError(
+            f"Dialogue tree '{tree_name}' referenced by girl '{girl_name}' is not defined."
+        ) from exc
+
+
+_base_girl_definitions = {
+    "tammy": {
+        "love": 15,
+        "prude": "easy",
+        "affinity": "club",
+        "meet_at": "bar",
+        "see_at": ["bar", "night life district", "historic district"],
     },
-    "liz":{
-        "love":10,
-        "prude":"easy",
-        'meet_at':'work',
-        "see_at":["work", 'city', 'shopping district'],
-        'affinity':'restaurant',
-        'dialogue_tree':{
-            0:{
-                'statement':{
-                    'compliment':"Your work from last week was really good.",
-                    'introduction': 'Hi, my name is',
-                    'question': 'Do you know where I can have some copies of this document made?'
-                },
-                'reply':{
-                    'compliment':["Thank you. Thats really nice of you to say.",1],
-                    'introduction': ["Um.. That's nice.",0],
-                    'question': ["I'm too busy.",-1],
-                    'observation':['Yeah....', 0]
-                }
-            },
-            1:{
-                'statement':{
-                    'compliment':"You look really pretty.",
-                    'introduction': 'Hi, my name is',
-                    'question': 'Do you know where I can have some copies of this document made?'
-                },
-                'reply':{
-                    'compliment':["Thank you. Thats really nice of you to say.",-1],
-                    'introduction': ["It's nice to meet you.",1],
-                    'question': ["I'm too busy.",0],
-                    'observation':['Yeah....', 0]
-                }
-            },
-            2:{
-                'statement':{
-                    'compliment':"You look really pretty.",
-                    'introduction': 'Hi, my name is',
-                    'question': 'Do you know where I can have some copies of this document made?'
-                },
-                'reply':{
-                    'compliment':["Thank you. Thats really nice of you to say.",0],
-                    'introduction': ["Um.. That's nice.",1],
-                    'question': ["Sure, the copy machine is right over here. I will show you.",1],
-                    'observation':['Yeah....', 0]
-                }
-            },
-            3:{
-                'statement':{
-                    'compliment':"You look really pretty.",
-                    'introduction': 'Hi, my name is',
-                    'question': 'Do you know where I can have some copies of this document made?'
-                },
-                'reply':{
-                    'compliment':["Thank you. Thats really nice of you to say.",-1],
-                    'introduction': ["Um.. That's nice.",1],
-                    'question': ["I'm too busy.",0],
-                    'observation':['Yeah....', 0]
-                }
-            },
-            4:{
-                'statement':{
-                    'compliment':"You look really pretty.",
-                    'introduction': 'Hi, my name is',
-                    'question': 'Do you know where I can have some copies of this document made?'
-                },
-                'reply':{
-                    'compliment':["Thank you. Thats really nice of you to say.",0],
-                    'introduction':[ "Um.. That's nice.",1],
-                    'question': ["I'm too busy.",0],
-                    'observation':['Yeah....', 0],
-                }
-            }
-        }
+    "liz": {
+        "love": 10,
+        "prude": "easy",
+        "affinity": "restaurant",
+        "meet_at": "work",
+        "see_at": ["work", "city", "shopping district"],
     },
-    "jasmine":{
-        "love":5,
-        "prude":"hard",
-        'meet_at':'school',
-        "see_at":["school", 'walking path', 'historic district'],
-        'affinity':'club', #??
-        'dialogue_tree':{
-            0:{
-                'statement':{
-                    'compliment':"Your work from last week was really good.",
-                    'introduction': 'Hi, my name is',
-                    'question': 'Do you know where I can have some copies of this document made?'
-                },
-                'reply':{
-                    'compliment':["Thank you. Thats really nice of you to say.",1],
-                    'introduction': ["Um.. That's nice.",0],
-                    'question': ["I'm too busy.",-1],
-                    'observation':['Yeah....', 0]
-                }
-            },
-            1:{
-                'statement':{
-                    'compliment':"You look really pretty.",
-                    'introduction': 'Hi, my name is',
-                    'question': 'Do you know where I can have some copies of this document made?'
-                },
-                'reply':{
-                    'compliment':["Thank you. Thats really nice of you to say.",-1],
-                    'introduction': ["It's nice to meet you.",1],
-                    'question': ["I'm too busy.",0],
-                    'observation':['Yeah....', 0]
-                }
-            },
-            2:{
-                'statement':{
-                    'compliment':"You look really pretty.",
-                    'introduction': 'Hi, my name is',
-                    'question': 'Do you know where I can have some copies of this document made?'
-                },
-                'reply':{
-                    'compliment':["Thank you. Thats really nice of you to say.",0],
-                    'introduction': ["Um.. That's nice.",1],
-                    'question': ["Sure, the copy machine is right over here. I will show you.",1],
-                    'observation':['Yeah....', 0]
-                }
-            },
-            3:{
-                'statement':{
-                    'compliment':"You look really pretty.",
-                    'introduction': 'Hi, my name is',
-                    'question': 'Do you know where I can have some copies of this document made?'
-                },
-                'reply':{
-                    'compliment':["Thank you. Thats really nice of you to say.",-1],
-                    'introduction': ["Um.. That's nice.",1],
-                    'question': ["I'm too busy.",0],
-                    'observation':['Yeah....', 0]
-                }
-            },
-            4:{
-                'statement':{
-                    'compliment':"You look really pretty.",
-                    'introduction': 'Hi, my name is',
-                    'question': 'Do you know where I can have some copies of this document made?'
-                },
-                'reply':{
-                    'compliment':["Thank you. Thats really nice of you to say.",0],
-                    'introduction':[ "Um.. That's nice.",1],
-                    'question': ["I'm too busy.",0],
-                    'observation':['Yeah....', 0],
-                }
-            }
-        }
+    "jasmine": {
+        "love": 5,
+        "prude": "hard",
+        "affinity": "club",
+        "meet_at": "school",
+        "see_at": ["school", "walking path", "historic district"],
     },
-    "claire":{
+    "claire": {
         "love": 10,
         "prude": "med",
-        'meet_at':'shopping district',
-        "see_at": ['shopping district', 'store', 'historic district'],
-        'affinity':'club',
-        'dialogue_tree':{
-            0:{
-                'statement':{
-                    'compliment':"Your work from last week was really good.",
-                    'introduction': 'Hi, my name is',
-                    'question': 'Do you know where I can have some copies of this document made?'
-                },
-                'reply':{
-                    'compliment':["Thank you. Thats really nice of you to say.",1],
-                    'introduction': ["Um.. That's nice.",0],
-                    'question': ["I'm too busy.",-1],
-                    'observation':['Yeah....', 0]
-                }
-            },
-            1:{
-                'statement':{
-                    'compliment':"You look really pretty.",
-                    'introduction': 'Hi, my name is',
-                    'question': 'Do you know where I can have some copies of this document made?'
-                },
-                'reply':{
-                    'compliment':["Thank you. Thats really nice of you to say.",-1],
-                    'introduction': ["It's nice to meet you.",1],
-                    'question': ["I'm too busy.",0],
-                    'observation':['Yeah....', 0]
-                }
-            },
-            2:{
-                'statement':{
-                    'compliment':"You look really pretty.",
-                    'introduction': 'Hi, my name is',
-                    'question': 'Do you know where I can have some copies of this document made?'
-                },
-                'reply':{
-                    'compliment':["Thank you. Thats really nice of you to say.",0],
-                    'introduction': ["Um.. That's nice.",1],
-                    'question': ["Sure, the copy machine is right over here. I will show you.",1],
-                    'observation':['Yeah....', 0]
-                }
-            },
-            3:{
-                'statement':{
-                    'compliment':"You look really pretty.",
-                    'introduction': 'Hi, my name is',
-                    'question': 'Do you know where I can have some copies of this document made?'
-                },
-                'reply':{
-                    'compliment':["Thank you. Thats really nice of you to say.",-1],
-                    'introduction': ["Um.. That's nice.",1],
-                    'question': ["I'm too busy.",0],
-                    'observation':['Yeah....', 0]
-                }
-            },
-            4:{
-                'statement':{
-                    'compliment':"You look really pretty.",
-                    'introduction': 'Hi, my name is',
-                    'question': 'Do you know where I can have some copies of this document made?'
-                },
-                'reply':{
-                    'compliment':["Thank you. Thats really nice of you to say.",0],
-                    'introduction':[ "Um.. That's nice.",1],
-                    'question': ["I'm too busy.",0],
-                    'observation':['Yeah....', 0],
-                }
-            }
-        }
+        "affinity": "club",
+        "meet_at": "shopping district",
+        "see_at": ["shopping district", "store", "historic district"],
     },
-    "rebecca":{
-        "love":5,
-        "prude":"med",
-        'meet_at':'store',
-        "see_at":['shopping district', "store", 'city'],
-        'affinity':'club',
-        'dialogue_tree':{
-            0:{
-                'statement':{
-                    'compliment':"Your work from last week was really good.",
-                    'introduction': 'Hi, my name is',
-                    'question': 'Do you know where I can have some copies of this document made?'
-                },
-                'reply':{
-                    'compliment':["Thank you. Thats really nice of you to say.",1],
-                    'introduction': ["Um.. That's nice.",0],
-                    'question': ["I'm too busy.",-1],
-                    'observation':['Yeah....', 0]
-                }
-            },
-            1:{
-                'statement':{
-                    'compliment':"You look really pretty.",
-                    'introduction': 'Hi, my name is',
-                    'question': 'Do you know where I can have some copies of this document made?'
-                },
-                'reply':{
-                    'compliment':["Thank you. Thats really nice of you to say.",-1],
-                    'introduction': ["It's nice to meet you.",1],
-                    'question': ["I'm too busy.",0],
-                    'observation':['Yeah....', 0]
-                }
-            },
-            2:{
-                'statement':{
-                    'compliment':"You look really pretty.",
-                    'introduction': 'Hi, my name is',
-                    'question': 'Do you know where I can have some copies of this document made?'
-                },
-                'reply':{
-                    'compliment':["Thank you. Thats really nice of you to say.",0],
-                    'introduction': ["Um.. That's nice.",1],
-                    'question': ["Sure, the copy machine is right over here. I will show you.",1],
-                    'observation':['Yeah....', 0]
-                }
-            },
-            3:{
-                'statement':{
-                    'compliment':"You look really pretty.",
-                    'introduction': 'Hi, my name is',
-                    'question': 'Do you know where I can have some copies of this document made?'
-                },
-                'reply':{
-                    'compliment':["Thank you. Thats really nice of you to say.",-1],
-                    'introduction': ["Um.. That's nice.",1],
-                    'question': ["I'm too busy.",0],
-                    'observation':['Yeah....', 0]
-                }
-            },
-            4:{
-                'statement':{
-                    'compliment':"You look really pretty.",
-                    'introduction': 'Hi, my name is',
-                    'question': 'Do you know where I can have some copies of this document made?'
-                },
-                'reply':{
-                    'compliment':["Thank you. Thats really nice of you to say.",0],
-                    'introduction':[ "Um.. That's nice.",1],
-                    'question': ["I'm too busy.",0],
-                    'observation':['Yeah....', 0],
-                }
-            }
-        }
+    "rebecca": {
+        "love": 5,
+        "prude": "med",
+        "affinity": "club",
+        "meet_at": "store",
+        "see_at": ["shopping district", "store", "city"],
     },
-    "brittany":{
-        "love":5,
-        "prude":"easy",
-        'meet_at':'night life district',
-        "see_at": ["night life district", 'bar','city'],
-        'affinity':'club',
-        'dialogue_tree':{
-            0:{
-                'statement':{
-                    'compliment':"Your work from last week was really good.",
-                    'introduction': 'Hi, my name is',
-                    'question': 'Do you know where I can have some copies of this document made?'
-                },
-                'reply':{
-                    'compliment':["Thank you. Thats really nice of you to say.",1],
-                    'introduction': ["Um.. That's nice.",0],
-                    'question': ["I'm too busy.",-1],
-                    'observation':['Yeah....', 0]
-                }
-            },
-            1:{
-                'statement':{
-                    'compliment':"You look really pretty.",
-                    'introduction': 'Hi, my name is',
-                    'question': 'Do you know where I can have some copies of this document made?'
-                },
-                'reply':{
-                    'compliment':["Thank you. Thats really nice of you to say.",-1],
-                    'introduction': ["It's nice to meet you.",1],
-                    'question': ["I'm too busy.",0],
-                    'observation':['Yeah....', 0]
-                }
-            },
-            2:{
-                'statement':{
-                    'compliment':"You look really pretty.",
-                    'introduction': 'Hi, my name is',
-                    'question': 'Do you know where I can have some copies of this document made?'
-                },
-                'reply':{
-                    'compliment':["Thank you. Thats really nice of you to say.",0],
-                    'introduction': ["Um.. That's nice.",1],
-                    'question': ["Sure, the copy machine is right over here. I will show you.",1],
-                    'observation':['Yeah....', 0]
-                }
-            },
-            3:{
-                'statement':{
-                    'compliment':"You look really pretty.",
-                    'introduction': 'Hi, my name is',
-                    'question': 'Do you know where I can have some copies of this document made?'
-                },
-                'reply':{
-                    'compliment':["Thank you. Thats really nice of you to say.",-1],
-                    'introduction': ["Um.. That's nice.",1],
-                    'question': ["I'm too busy.",0],
-                    'observation':['Yeah....', 0]
-                }
-            },
-            4:{
-                'statement':{
-                    'compliment':"You look really pretty.",
-                    'introduction': 'Hi, my name is',
-                    'question': 'Do you know where I can have some copies of this document made?'
-                },
-                'reply':{
-                    'compliment':["Thank you. Thats really nice of you to say.",0],
-                    'introduction':[ "Um.. That's nice.",1],
-                    'question': ["I'm too busy.",0],
-                    'observation':['Yeah....', 0],
-                }
-            }
-        }
+    "brittany": {
+        "love": 5,
+        "prude": "easy",
+        "affinity": "club",
+        "meet_at": "night life district",
+        "see_at": ["night life district", "bar", "city"],
     },
-    "kerry":{
-        "love":15,
-        "prude":"hard",
-        'meet_at':'hiking trails',
-        "see_at": ['walking path','hiking trails', 'historic district'],
-        'affinity':'club',
-        'dialogue_tree':{
-            0:{
-                'statement':{
-                    'compliment':"Your work from last week was really good.",
-                    'introduction': 'Hi, my name is',
-                    'question': 'Do you know where I can have some copies of this document made?'
-                },
-                'reply':{
-                    'compliment':["Thank you. Thats really nice of you to say.",1],
-                    'introduction': ["Um.. That's nice.",0],
-                    'question': ["I'm too busy.",-1],
-                    'observation':['Yeah....', 0]
-                }
-            },
-            1:{
-                'statement':{
-                    'compliment':"You look really pretty.",
-                    'introduction': 'Hi, my name is',
-                    'question': 'Do you know where I can have some copies of this document made?'
-                },
-                'reply':{
-                    'compliment':["Thank you. Thats really nice of you to say.",-1],
-                    'introduction': ["It's nice to meet you.",1],
-                    'question': ["I'm too busy.",0],
-                    'observation':['Yeah....', 0]
-                }
-            },
-            2:{
-                'statement':{
-                    'compliment':"You look really pretty.",
-                    'introduction': 'Hi, my name is',
-                    'question': 'Do you know where I can have some copies of this document made?'
-                },
-                'reply':{
-                    'compliment':["Thank you. Thats really nice of you to say.",0],
-                    'introduction': ["Um.. That's nice.",1],
-                    'question': ["Sure, the copy machine is right over here. I will show you.",1],
-                    'observation':['Yeah....', 0]
-                }
-            },
-            3:{
-                'statement':{
-                    'compliment':"You look really pretty.",
-                    'introduction': 'Hi, my name is',
-                    'question': 'Do you know where I can have some copies of this document made?'
-                },
-                'reply':{
-                    'compliment':["Thank you. Thats really nice of you to say.",-1],
-                    'introduction': ["Um.. That's nice.",1],
-                    'question': ["I'm too busy.",0],
-                    'observation':['Yeah....', 0]
-                }
-            },
-            4:{
-                'statement':{
-                    'compliment':"You look really pretty.",
-                    'introduction': 'Hi, my name is',
-                    'question': 'Do you know where I can have some copies of this document made?'
-                },
-                'reply':{
-                    'compliment':["Thank you. Thats really nice of you to say.",0],
-                    'introduction':[ "Um.. That's nice.",1],
-                    'question': ["I'm too busy.",0],
-                    'observation':['Yeah....', 0],
-                }
-            }
-        }
+    "kerry": {
+        "love": 15,
+        "prude": "hard",
+        "affinity": "club",
+        "meet_at": "hiking trails",
+        "see_at": ["walking path", "hiking trails", "historic district"],
     },
-    "ricky":{
-        "love":15,
-        "prude":"med",
-        'meet_at':'theatre district',
-        "see_at": ['theatre district','school','city'],
-        'affinity':'club',
-        'dialogue_tree':{
-            0:{
-                'statement':{
-                    'compliment':"Your work from last week was really good.",
-                    'introduction': 'Hi, my name is',
-                    'question': 'Do you know where I can have some copies of this document made?'
-                },
-                'reply':{
-                    'compliment':["Thank you. Thats really nice of you to say.",1],
-                    'introduction': ["Um.. That's nice.",0],
-                    'question': ["I'm too busy.",-1],
-                    'observation':['Yeah....', 0]
-                }
-            },
-            1:{
-                'statement':{
-                    'compliment':"You look really pretty.",
-                    'introduction': 'Hi, my name is',
-                    'question': 'Do you know where I can have some copies of this document made?'
-                },
-                'reply':{
-                    'compliment':["Thank you. Thats really nice of you to say.",-1],
-                    'introduction': ["It's nice to meet you.",1],
-                    'question': ["I'm too busy.",0],
-                    'observation':['Yeah....', 0]
-                }
-            },
-            2:{
-                'statement':{
-                    'compliment':"You look really pretty.",
-                    'introduction': 'Hi, my name is',
-                    'question': 'Do you know where I can have some copies of this document made?'
-                },
-                'reply':{
-                    'compliment':["Thank you. Thats really nice of you to say.",0],
-                    'introduction': ["Um.. That's nice.",1],
-                    'question': ["Sure, the copy machine is right over here. I will show you.",1],
-                    'observation':['Yeah....', 0]
-                }
-            },
-            3:{
-                'statement':{
-                    'compliment':"You look really pretty.",
-                    'introduction': 'Hi, my name is',
-                    'question': 'Do you know where I can have some copies of this document made?'
-                },
-                'reply':{
-                    'compliment':["Thank you. Thats really nice of you to say.",-1],
-                    'introduction': ["Um.. That's nice.",1],
-                    'question': ["I'm too busy.",0],
-                    'observation':['Yeah....', 0]
-                }
-            },
-            4:{
-                'statement':{
-                    'compliment':"You look really pretty.",
-                    'introduction': 'Hi, my name is',
-                    'question': 'Do you know where I can have some copies of this document made?'
-                },
-                'reply':{
-                    'compliment':["Thank you. Thats really nice of you to say.",0],
-                    'introduction':[ "Um.. That's nice.",1],
-                    'question': ["I'm too busy.",0],
-                    'observation':['Yeah....', 0],
-                }
-            }
-        }
+    "ricky": {
+        "love": 15,
+        "prude": "med",
+        "affinity": "club",
+        "meet_at": "theatre district",
+        "see_at": ["theatre district", "school", "city"],
     },
-    "donika":{
-        "love":10,
-        "prude":"hard",
-        'meet_at':'gym',
-        "see_at":["gym",'work', 'historic district'],
-        'affinity':'club',
-        'dialogue_tree':{
-            0:{
-                'statement':{
-                    'compliment':"Your work from last week was really good.",
-                    'introduction': 'Hi, my name is',
-                    'question': 'Do you know where I can have some copies of this document made?'
-                },
-                'reply':{
-                    'compliment':["Thank you. Thats really nice of you to say.",1],
-                    'introduction': ["Um.. That's nice.",0],
-                    'question': ["I'm too busy.",-1],
-                    'observation':['Yeah....', 0]
-                }
-            },
-            1:{
-                'statement':{
-                    'compliment':"You look really pretty.",
-                    'introduction': 'Hi, my name is',
-                    'question': 'Do you know where I can have some copies of this document made?'
-                },
-                'reply':{
-                    'compliment':["Thank you. Thats really nice of you to say.",-1],
-                    'introduction': ["It's nice to meet you.",1],
-                    'question': ["I'm too busy.",0],
-                    'observation':['Yeah....', 0]
-                }
-            },
-            2:{
-                'statement':{
-                    'compliment':"You look really pretty.",
-                    'introduction': 'Hi, my name is',
-                    'question': 'Do you know where I can have some copies of this document made?'
-                },
-                'reply':{
-                    'compliment':["Thank you. Thats really nice of you to say.",0],
-                    'introduction': ["Um.. That's nice.",1],
-                    'question': ["Sure, the copy machine is right over here. I will show you.",1],
-                    'observation':['Yeah....', 0]
-                }
-            },
-            3:{
-                'statement':{
-                    'compliment':"You look really pretty.",
-                    'introduction': 'Hi, my name is',
-                    'question': 'Do you know where I can have some copies of this document made?'
-                },
-                'reply':{
-                    'compliment':["Thank you. Thats really nice of you to say.",-1],
-                    'introduction': ["Um.. That's nice.",1],
-                    'question': ["I'm too busy.",0],
-                    'observation':['Yeah....', 0]
-                }
-            },
-            4:{
-                'statement':{
-                    'compliment':"You look really pretty.",
-                    'introduction': 'Hi, my name is',
-                    'question': 'Do you know where I can have some copies of this document made?'
-                },
-                'reply':{
-                    'compliment':["Thank you. Thats really nice of you to say.",0],
-                    'introduction':[ "Um.. That's nice.",1],
-                    'question': ["I'm too busy.",0],
-                    'observation':['Yeah....', 0],
-                }
-            }
-        }
-    }
+    "donika": {
+        "love": 10,
+        "prude": "hard",
+        "affinity": "club",
+        "meet_at": "gym",
+        "see_at": ["gym", "work", "historic district"],
+    },
 }
+
+girl_list = {}
+for name, attributes in _base_girl_definitions.items():
+    entry = dict(attributes)
+    entry["dialogue_tree"] = _dialogue_tree_for(name)
+    girl_list[name] = entry

@@ -1,98 +1,152 @@
-import random, time
+import random
+import time
+from script_loader import load_script
+
 
 class Dialogue(object):
     def __init__(self):
-        self.levels = 5
-                
+        script = load_script()
+        self.messages = script["dialogue"]
+        self.date_choices = self.messages["date_choices"]
+
     def get_dialogue(self, engine, player):
-        print("""
-        %s stands in front of you.
-        """ % player.focus_character.name)
-        
-        print("Hello...")
-        
-        for i in range(self.levels):
+        encounter_text = self.messages["encounter_message"].format(
+            name=player.focus_character.name
+        )
+        print(f"\n        {encounter_text}\n")
 
-            print("dialogue level", i)
-            print("character opionion", player.focus_character.opinion)
+        print(self.messages["greeting"])
 
-            print("(Enter your choice)")
+        dialogue_tree = player.focus_character.dialogue_tree
+        for i in range(len(dialogue_tree)):
+            print(f"{self.messages['level_label']} {i}")
+            print(f"{self.messages['opinion_label']} {player.focus_character.opinion}")
+
+            print(self.messages["choice_prompt"])
 
             if player.focus_character.name not in player.known_girls:
-                print(1, '-', player.focus_character.dialogue_tree[i]['statement']['compliment'])
-                print(2, '-', player.focus_character.dialogue_tree[i]['statement']['introduction'], player.name)
-                print(3, '-', player.focus_character.dialogue_tree[i]['statement']['question'])
-                
+                print(
+                    1,
+                    '-',
+                    dialogue_tree[i]["statement"]["compliment"],
+                )
+                print(
+                    2,
+                    '-',
+                    dialogue_tree[i]["statement"]["introduction"],
+                    player.name,
+                )
+                print(
+                    3,
+                    '-',
+                    dialogue_tree[i]["statement"]["question"],
+                )
+
                 statement = input("> ")
-                #print statement
-                
+
                 if int(statement) == 1:
-                    print(player.focus_character.dialogue_tree[i]['reply']['compliment'][0])
-                    player.focus_character.opinion += player.focus_character.dialogue_tree[i]['reply']['compliment'][1]
+                    print(dialogue_tree[i]["reply"]["compliment"][0])
+                    player.focus_character.opinion += dialogue_tree[i]["reply"][
+                        "compliment"
+                    ][1]
                 elif int(statement) == 2:
                     player.make_acquaintance(player.focus_character)
-                    print(player.focus_character.dialogue_tree[i]['reply']['introduction'][0])
-                    player.focus_character.opinion += player.focus_character.dialogue_tree[i]['reply']['introduction'][1]
+                    print(dialogue_tree[i]["reply"]["introduction"][0])
+                    player.focus_character.opinion += dialogue_tree[i]["reply"][
+                        "introduction"
+                    ][1]
                 elif int(statement) == 3:
-                    print(player.focus_character.dialogue_tree[i]['reply']['question'][0])
-                    player.focus_character.opinion += player.focus_character.dialogue_tree[i]['reply']['question'][1]
+                    print(dialogue_tree[i]["reply"]["question"][0])
+                    player.focus_character.opinion += dialogue_tree[i]["reply"][
+                        "question"
+                    ][1]
             else:
                 if player.focus_character.opinion < 3:
-                    print(1, '-', player.focus_character.dialogue_tree[i]['statement']['compliment'])
-                    print(2, '-', random.choice(engine.current_location.observations))
-                    print(3, '-', player.focus_character.dialogue_tree[i]['statement']['question'])
-                
+                    print(
+                        1,
+                        '-',
+                        dialogue_tree[i]["statement"]["compliment"],
+                    )
+                    print(
+                        2,
+                        '-',
+                        random.choice(engine.current_location.observations),
+                    )
+                    print(
+                        3,
+                        '-',
+                        dialogue_tree[i]["statement"]["question"],
+                    )
+
                     statement = input("> ")
-                
+
                     if int(statement) == 1:
-                        print(player.focus_character.dialogue_tree[i]['reply']['compliment'][0])
-                        player.focus_character.opinion += player.focus_character.dialogue_tree[i]['reply']['compliment'][1]
+                        print(dialogue_tree[i]["reply"]["compliment"][0])
+                        player.focus_character.opinion += dialogue_tree[i]["reply"][
+                            "compliment"
+                        ][1]
                     elif int(statement) == 2:
-                        print(player.focus_character.dialogue_tree[i]['reply']['observation'][0])
-                        player.focus_character.opinion += player.focus_character.dialogue_tree[i]['reply']['observation'][1]
+                        print(dialogue_tree[i]["reply"]["observation"][0])
+                        player.focus_character.opinion += dialogue_tree[i]["reply"][
+                            "observation"
+                        ][1]
                     elif int(statement) == 3:
-                        print(player.focus_character.dialogue_tree[i]['reply']['question'][0]) 
-                        player.focus_character.opinion += player.focus_character.dialogue_tree[i]['reply']['question'][1]            
+                        print(dialogue_tree[i]["reply"]["question"][0])
+                        player.focus_character.opinion += dialogue_tree[i]["reply"][
+                            "question"
+                        ][1]
+
                 else:
-                    print(1, '-', player.focus_character.dialogue_tree[i]['statement']['compliment'])
-                    print(2, '-', random.choice(engine.current_location.observations))
-                    print(3, '-', player.focus_character.dialogue_tree[i]['statement']['question'])
-                    print(4, '-', "Would you like to go on a date?")
-                
+                    print(
+                        1,
+                        '-',
+                        dialogue_tree[i]["statement"]["compliment"],
+                    )
+                    print(
+                        2,
+                        '-',
+                        random.choice(engine.current_location.observations),
+                    )
+                    print(
+                        3,
+                        '-',
+                        dialogue_tree[i]["statement"]["question"],
+                    )
+                    print(4, '-', self.messages["date_offer"])
+
                     statement = input("> ")
-                
+
                     if int(statement) == 1:
-                        print(player.focus_character.dialogue_tree[i]['reply']['compliment'][0])
-                        player.focus_character.opinion += player.focus_character.dialogue_tree[i]['reply']['compliment'][1]
+                        print(dialogue_tree[i]["reply"]["compliment"][0])
+                        player.focus_character.opinion += dialogue_tree[i]["reply"][
+                            "compliment"
+                        ][1]
                     elif int(statement) == 2:
-                        print(player.focus_character.dialogue_tree[i]['reply']['observation'][0])
-                        player.focus_character.opinion += player.focus_character.dialogue_tree[i]['reply']['observation'][1]
+                        print(dialogue_tree[i]["reply"]["observation"][0])
+                        player.focus_character.opinion += dialogue_tree[i]["reply"][
+                            "observation"
+                        ][1]
                     elif int(statement) == 3:
-                        print(player.focus_character.dialogue_tree[i]['reply']['question'][0])               
-                        player.focus_character.opinion += player.focus_character.dialogue_tree[i]['reply']['question'][1]
+                        print(dialogue_tree[i]["reply"]["question"][0])
+                        player.focus_character.opinion += dialogue_tree[i]["reply"][
+                            "question"
+                        ][1]
                     elif int(statement) == 4:
-                        print("Sure! Where to?")
-                        print(1, '-', "Let's go to the club.")
-                        print(2, '-', "Let's go for a nice hike.")
-                        print(3, '-', "Let's go out for dinner at that new restaurant.")
-                        print(4, '-', "Let's go to the theatre for a show.")
-                        
+                        print(self.messages["date_invite"])
+                        for index, choice in enumerate(self.date_choices, start=1):
+                            print(index, '-', choice["text"])
+
                         date_destination = input("> ")
-                        
-                        print("Ok. That sounds good. I will see you there.")
+
+                        print(self.messages["date_confirmation"])
                         time.sleep(0.3)
-                        
-                        if int(date_destination) == 1:
-                            engine.make_date(engine.locations['club'], player.focus_character)
-                        elif int(date_destination) == 2:
-                            engine.make_date(engine.locations['river'], player.focus_character)
-                        elif int(date_destination) == 3:
-                            engine.make_date(engine.locations['restaurant'], player.focus_character)
-                        elif int(date_destination) == 4:
-                            engine.make_date(engine.locations['city'], player.focus_character)
-                         
-                        #leave dialogue loop as soon as date initiated.
-                        break   
-                        
-        #leave "Get Dialogue" back to "day loop"                
+
+                        selected_choice = self.date_choices[int(date_destination) - 1]
+                        engine.make_date(
+                            engine.locations[selected_choice["location"]],
+                            player.focus_character,
+                        )
+
+                        break
+
         engine.start_day()
