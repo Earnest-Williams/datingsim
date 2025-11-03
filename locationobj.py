@@ -1,5 +1,5 @@
 import random
-from typing import Optional
+from typing import List, Optional
 
 _rng = random.Random()
 
@@ -24,15 +24,18 @@ class Location(object):
         self.is_date = False
         self.date_girl = None
 
-    def describe(self):
-        print(self.description)
+    def describe(self) -> str:
+        if self.is_date and self.date_description:
+            return self.date_description
+        return self.description
 
-    def describe_thing(self, thing):
-        print(self.nouns[thing])
+    def describe_thing(self, thing) -> str:
+        return self.nouns[thing]
 
-def activate_location(engine, destination, inputobj, player):
+def activate_location(engine, destination, inputobj, player) -> List[str]:
     #if a 'current location already exists set new destination to current
     #location based off it's relationship to current location
+    messages: List[str] = []
     if engine.current_location:
         if destination in engine.current_location.destinations:
             new_location = engine.current_location.destinations[destination]
@@ -41,13 +44,17 @@ def activate_location(engine, destination, inputobj, player):
             engine.current_location = engine.locations[destination]
     else:
         engine.current_location = engine.locations[destination]
-        
+
     #check if destination location is a date
     if engine.current_location.is_date == True:
-        print("I'm excited to meet %s here for our date." % engine.current_location.date_girl.name)
-        engine.start_date()
+        messages.append(
+            "I'm excited to meet %s here for our date." % engine.current_location.date_girl.name
+        )
+        date_message = engine.start_date()
+        if date_message:
+            messages.append(date_message)
     else:
-        print("I am currently at the "+ str(engine.current_location.name) + ".")
+        messages.append("I am currently at the "+ str(engine.current_location.name) + ".")
         #clear list of characters in location (for both INPUTOBJ and LOCATION obj)
         #repopulate list of avaiable characters based on current location
         del inputobj.character[:]
@@ -57,17 +64,17 @@ def activate_location(engine, destination, inputobj, player):
                 if engine.current_location.name == v.meet_at:
                     inputobj.character.append(k)
                     engine.current_location.characters.append(k)
-                    print(f"{k} is here.")
+                    messages.append(f"{k} is here.")
                     v.meet_her_at()
             else:
                 see_at = _rng.choice(v.see_at)
                 if engine.current_location.name == see_at:
                     inputobj.character.append(k)
                     engine.current_location.characters.append(k)
-                    print(f"{k} is here.")
-                
+                    messages.append(f"{k} is here.")
+
     #add currect location to player.known_locations if its not already there
-    if engine.current_location.name not in player.known_locations:            
+    if engine.current_location.name not in player.known_locations:
         player.known_locations.append(engine.current_location.name)
 
     #clear the list of directions you can go    
@@ -98,10 +105,12 @@ def activate_location(engine, destination, inputobj, player):
     #appends list of player known locations to get_input "destinations"
     for i in player.known_locations:
         inputobj.direction.append(i)
-    
+
     #update Input Object's "Vocab" lists
     inputobj.vocab['verb'] = inputobj.verb
     inputobj.vocab['direction'] = inputobj.direction
     inputobj.vocab['noun'] = inputobj.noun
     inputobj.vocab['inactive_verb'] = inputobj.inactive_verb
     inputobj.vocab['character'] = inputobj.character
+
+    return messages

@@ -1,7 +1,5 @@
 from __future__ import annotations
 
-import contextlib
-import io
 import os
 from copy import deepcopy
 from typing import Any, Dict, List, Optional, Tuple
@@ -22,9 +20,6 @@ from getinputobject import Input
 class EngineAdapter:
     """Bridge the legacy engine with the Qt GUI overlay."""
 
-    def _quiet(self):
-        return contextlib.redirect_stdout(io.StringIO())
-
     def __init__(self, bus: Bus, *, seed: Optional[int] = None):
         self.bus = bus
         if seed is not None:
@@ -43,9 +38,11 @@ class EngineAdapter:
         self.e.build_girls(girl_list)
 
         self.mc.get_name("Protagonist")
-        with self._quiet():
-            activate_location(self.e, "residential district", Input(), self.mc)
-            self.e.start_day()
+        arrival = activate_location(self.e, "residential district", Input(), self.mc)
+        day_message: Optional[str] = None
+        if str(self.e.state) != "date_state":
+            day_message = self.e.start_day()
+        self._toast(*arrival, day_message)
 
         # Background/sprite asset maps.
         self._bg_by_loc: Dict[str, str] = {
@@ -68,6 +65,11 @@ class EngineAdapter:
         self._level_index: int = 0
         self._pending_date = False
         self._emit_scene()
+
+    def _toast(self, *lines: Optional[str]) -> None:
+        message = "\n".join(line for line in lines if line)
+        if message.strip():
+            self.bus.toast.emit(message)
 
     # -------- GUI API --------
     def next_dialogue_payload(self) -> Dict[str, Any]:
@@ -109,6 +111,11 @@ class EngineAdapter:
                 opts.append({"id": 4, "label": self.dialogue_text["date_offer"]})
 
         return {"speaker": speaker, "text": text, "options": opts}
+
+    def advance_dialogue(self) -> Dict[str, Any]:
+        payload = self.next_dialogue_payload()
+        self.bus.dialogue_ready.emit(payload)
+        return payload
 
     def apply_choice(self, option_id: int) -> None:
         girl = self._focused()
@@ -154,18 +161,22 @@ class EngineAdapter:
             return
 
         self._level_index = min(self._level_index + 1, len(self._levels) - 1)
-        with self._quiet():
-            self.e.start_day()
+        day_message = self.e.start_day()
+        self._toast(day_message)
         self._emit_scene()
+        self.advance_dialogue()
 
     def travel_to(self, exit_key: str) -> None:
         if not self.e.current_location:
             return
         _inp = Input()
-        with self._quiet():
-            activate_location(self.e, exit_key, _inp, self.mc)
-            self.e.start_day()
+        messages = activate_location(self.e, exit_key, _inp, self.mc)
+        day_message: Optional[str] = None
+        if str(self.e.state) != "date_state":
+            day_message = self.e.start_day()
+        self._toast(*messages, day_message)
         self._emit_scene()
+        self.advance_dialogue()
 
     def save(self, path: str = "save.yaml") -> None:
         focused = self._focused()
@@ -213,6 +224,7 @@ class EngineAdapter:
         self._level_index = 0
         self._emit_stats()
         self._emit_scene()
+        self.advance_dialogue()
 
     def _focused(self) -> Optional[Girl]:
         return self.mc.focus_character
@@ -256,6 +268,8 @@ class EngineAdapter:
         if state.endswith("_state"):
             state = state[: -len("_state")]
         self.bus.state_changed.emit(state)
+        if state == "dialogue":
+            self.advance_dialogue()
 
     def _emit_stats(self) -> None:
         stats = deepcopy(self._base_stats)
@@ -295,11 +309,23 @@ class EngineAdapter:
             "options": [{"id": i + 1, "label": choice["text"]} for i, choice in enumerate(choices)],
         }
 
-        def _handle(choice_id: int) -> None:
-            idx = max(1, min(choice_id, len(choices))) - 1
+        original_apply = self.apply_choice
+
+        def _after_confirmation(_: int) -> None:
+            try:
+                self._level_index = min(self._level_index + 1, len(self._levels) - 1)
+                day_message = self.e.start_day()
+            finally:
+                self.apply_choice = original_apply
+            self._toast(day_message)
+            self._emit_scene()
+            self.advance_dialogue()
+
+        def _handle(option: int) -> None:
+            idx = max(1, min(option, len(choices))) - 1
             loc_key = choices[idx]["location"]
-            with self._quiet():
-                self.e.make_date(self.e.locations[loc_key], self._focused())
+            self.e.make_date(self.e.locations[loc_key], self._focused())
+            self.apply_choice = _after_confirmation  # type: ignore[assignment]
             self.bus.dialogue_ready.emit(
                 {
                     "speaker": self._focused().name.title() if self._focused() else "",
@@ -307,15 +333,9 @@ class EngineAdapter:
                     "options": [{"id": 1, "label": "Continue"}],
                 }
             )
-            self._emit_scene()
 
-        original_apply = self.apply_choice
+        def _await_date(option: int) -> None:
+            _handle(option)
 
-        def once(option: int) -> None:
-            try:
-                _handle(option)
-            finally:
-                self.apply_choice = original_apply
-
-        self.apply_choice = once  # type: ignore[assignment]
+        self.apply_choice = _await_date  # type: ignore[assignment]
         self.bus.dialogue_ready.emit(payload)

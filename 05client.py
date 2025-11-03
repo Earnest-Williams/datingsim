@@ -22,8 +22,13 @@ e.introduction(introduction)
 mc.get_name("jake")
 
 #### begin game #####
-activate_location(e,'residential district', i, mc)
-e.start_day()
+arrival = activate_location(e,'residential district', i, mc)
+for line in arrival:
+    print(line)
+if str(e.state) == 'day_state':
+    day_msg = e.start_day()
+    if day_msg:
+        print(day_msg)
 
 while e.game_over != True:
     if str(e.state) == 'day_state':

@@ -18,7 +18,16 @@ class Dialogue(object):
         self.messages = script["dialogue"]
         self.date_choices = self.messages["date_choices"]
 
-    def get_dialogue(self, engine, player):
+    def get_dialogue(self, engine, player, *, cli_mode: bool = True):
+        """Legacy console interaction loop.
+
+        The GUI path builds dialogue payloads via ``EngineAdapter`` and should
+        not call this function. Set ``cli_mode`` to ``False`` to raise if an
+        unexpected caller attempts to use the console behaviour.
+        """
+        if not cli_mode:
+            raise RuntimeError("Dialogue.get_dialogue is CLI-only; use the GUI adapter")
+
         encounter_text = self.messages["encounter_message"].format(
             name=player.focus_character.name
         )

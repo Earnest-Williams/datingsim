@@ -171,16 +171,22 @@ class Input(object):
             elif x.object.lower() == 'error':
                 print("I'm not sure where that is or if it even exists.")
             else:
-                activate_location(engine, x.object.lower(), self, character)
+                messages = activate_location(engine, x.object.lower(), self, character)
+                for line in messages:
+                    print(line)
                 
         if x.verb.lower() == 'leave':
             if x.object == 'none':
                 if 'outside' in engine.current_location.destinations:
-                    activate_location(engine, 'outside', self, character)
+                    messages = activate_location(engine, 'outside', self, character)
+                    for line in messages:
+                        print(line)
                 else:
                     print("Where do you want to leave to?")
             else:
-                activate_location(engine, x.object, self, character)
+                messages = activate_location(engine, x.object, self, character)
+                for line in messages:
+                    print(line)
         
         if x.verb.lower() == "talk":
             if x.object == 'none':
@@ -197,6 +203,10 @@ class Input(object):
         
         if x.verb.lower() == "look":
             if x.object == "none":
-                engine.current_location.describe()
+                desc = engine.current_location.describe()
+                if desc:
+                    print(desc)
             else:
-                engine.current_location.describe_thing(x.object)
+                detail = engine.current_location.describe_thing(x.object)
+                if detail:
+                    print(detail)
