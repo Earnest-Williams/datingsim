@@ -2,11 +2,14 @@ from __future__ import annotations
 import os, json, yaml
 from typing import Any, Dict
 
-SCRIPT_PATHS = [
-    os.path.join("game", "script.yaml"),
-    os.path.join("game", "script.yml"),
-    os.path.join("game", "script.json"),
-]
+_MODULE_DIR = os.path.dirname(os.path.abspath(__file__))
+_SCRIPT_FILENAMES = ("script.yaml", "script.yml", "script.json")
+
+SCRIPT_PATHS = []
+for filename in _SCRIPT_FILENAMES:
+    SCRIPT_PATHS.append(os.path.join(_MODULE_DIR, filename))
+for filename in _SCRIPT_FILENAMES:
+    SCRIPT_PATHS.append(os.path.join("game", filename))
 
 _DEFAULT_SCRIPT: Dict[str, Any] = {
     "ui": {
