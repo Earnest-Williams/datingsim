@@ -6,7 +6,7 @@ import logging
 
 from PySide6.QtCore import Qt
 from PySide6.QtGui import QAction, QKeySequence, QShortcut
-from PySide6.QtWidgets import QInputDialog, QWidget
+from PySide6.QtWidgets import QLabel, QInputDialog, QWidget
 
 from app.bus import Bus
 from app.engine_adapter import EngineAdapter
@@ -61,6 +61,15 @@ class MainWindow(QWidget):
             parent=self,
         )
 
+        self._summary_title = QLabel("<b>Stats</b>", parent=self.left)
+        self._summary_title.setStyleSheet("color:#9ad1cc;")
+        self._summary = QLabel("MC: —\nTalking to: —\nOpinion: —\nKnown: —", parent=self.left)
+        self._summary.setStyleSheet("color:#dde;")
+        self._summary.setWordWrap(True)
+        self._summary.setTextInteractionFlags(Qt.TextSelectableByMouse)
+        self.left.content.addWidget(self._summary_title)
+        self.left.content.addWidget(self._summary)
+
         self.char_pane = CharacterPane(
             parent=self.left,
             ui_strings=self.ui_strings.get("character_pane"),
@@ -68,12 +77,24 @@ class MainWindow(QWidget):
         self.char_pane.bind_bus(self.bus)
         self.left.content.addWidget(self.char_pane)
 
+        self._recent_title = QLabel("<b>Recent</b>", parent=self.right)
+        self._recent_title.setStyleSheet("color:#9ad1cc;")
+        self._recent = QLabel("—", parent=self.right)
+        self._recent.setStyleSheet("color:#dde;")
+        self._recent.setWordWrap(True)
+        self._recent.setTextInteractionFlags(Qt.TextSelectableByMouse)
+        self.right.content.addWidget(self._recent_title)
+        self.right.content.addWidget(self._recent)
+
         self.know_pane = KnowledgePane(
             parent=self.right,
             ui_strings=self.ui_strings.get("knowledge_pane"),
         )
         self.know_pane.bind_bus(self.bus)
         self.right.content.addWidget(self.know_pane)
+
+        self.bus.stats_updated.connect(self._update_summary)
+        self.bus.toast_history.connect(self._update_recent)
 
         # Bottom overlay
         self.overlay = BottomOverlay(self.bus, parent=self)
@@ -139,7 +160,11 @@ class MainWindow(QWidget):
         self._seed = seed
         try:
             self.engine = EngineAdapter(self.bus, seed=seed)
-            self.engine.advance_dialogue()
+            loaded = False
+            if seed is None:
+                loaded = self.engine.load()
+            if not loaded:
+                self.engine.advance_dialogue()
         except Exception as exc:  # pragma: no cover - UI safety net
             self._logger.exception("Failed to initialise engine")
             self.bus.toast.emit(str(exc))
@@ -217,6 +242,38 @@ class MainWindow(QWidget):
     def _save(self):
         if self.engine:
             self._safe_call(self.engine.save)
+
+    def _update_summary(self, stats: dict):
+        name = stats.get("name", "You")
+        focused_raw = stats.get("focused_girl")
+        focused = focused_raw.title() if isinstance(focused_raw, str) else "—"
+        opinion = stats.get("focused_opinion")
+        opinion_text = "—" if opinion is None else str(opinion)
+        known = stats.get("known_girls") or []
+        known_text = ", ".join(sorted(k.title() for k in known)) if known else "—"
+        lines = [
+            f"MC: {name}",
+            f"Talking to: {focused}",
+            f"Opinion: {opinion_text}",
+            f"Known: {known_text}",
+        ]
+        self._summary.setText("\n".join(lines))
+
+    def _update_recent(self, entries):
+        if not entries:
+            text = "—"
+        else:
+            recent = entries[-5:]
+            text = "\n\n".join(recent)
+        self._recent.setText(text)
+
+    def closeEvent(self, event):
+        if self.engine:
+            try:
+                self.engine.save()
+            except Exception:  # pragma: no cover - best effort persistence
+                self._logger.exception("Failed to save state")
+        super().closeEvent(event)
 
     def _load(self):
         if self.engine:

@@ -166,5 +166,5 @@ ui:
     entry_joiner: " — "
   determinism:
     dialog_title: Deterministic Seed
-    dialog_prompt: Enter a seed for deterministic simulation:
+    dialog_prompt: "Enter a seed for deterministic simulation:"
     toast: Deterministic seed set to {seed}.

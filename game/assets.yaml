@@ -3,6 +3,7 @@ locales:
   club: assets/locales/classroom_generic.png
   restaurant: assets/locales/classroom_generic.png
   city: assets/locales/classroom_generic.png
+  river: assets/locales/classroom_generic.png
   school: assets/locales/Library_Nook.png
 sprites:
   neutral: assets/girls/Alice/Alice_Neutral_Transparent.png
