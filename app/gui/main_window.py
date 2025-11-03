@@ -90,5 +90,8 @@ class MainWindow(QWidget):
         self.bus.dialogue_ready.emit(payload)
 
     def choose(self, option_id: int):
-        self.engine.apply_choice(option_id)
-        self.advance()
+        payload = self.engine.apply_choice(option_id)
+        if payload is not None:
+            self.bus.dialogue_ready.emit(payload)
+        else:
+            self.advance()
