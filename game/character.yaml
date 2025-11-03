@@ -1,0 +1,30 @@
+id: protagonist
+name: "Alice Wrenford"
+level: 1
+hp: 24
+mp: 6
+stamina: 10
+attrs:
+  grit: 3
+  savvy: 3
+  charm: 2
+  sense: 2
+skills:
+  scavenging: 2
+  electronics: 1
+  barter: 1
+  athletics: 1
+conditions:
+  - fatigue: 0
+  - injured: false
+affinity:
+  alice: 1
+inventory:
+  - id: multi_tool
+    name: "Multi-tool"
+    qty: 1
+  - id: ration_pack
+    name: "Ration Pack"
+    qty: 2
+currency:
+  scrip: 18

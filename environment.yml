@@ -1,7 +1,7 @@
-name: datingsim
-channels:
-  - conda-forge
-  - defaults
+name: datingsim-gui
+channels: [conda-forge, defaults]
 dependencies:
   - python=3.11
+  - pyside6
+  - pyyaml
   - pip

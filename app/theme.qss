@@ -1,0 +1,6 @@
+QWidget { background: #0e1114; color: #e8e8e8; }
+#left-pane, #right-pane { background: #151a1f; border: 1px solid #2a2f36; }
+#bottom-overlay { background: rgba(14,17,20,220); border-top: 1px solid #2a2f36; }
+QPushButton { background: #1b2027; border: 1px solid #2a2f36; padding: 8px 12px; }
+QPushButton:hover { border-color: #9ad1cc; }
+QProgressBar::chunk { background: #9ad1cc; }

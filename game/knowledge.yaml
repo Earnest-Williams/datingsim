@@ -1,0 +1,17 @@
+notes:
+  - id: world-state
+    title: "Long Twilight"
+    text: "Failed apocalypse; infrastructure limps; jury-rigged tech."
+    tags: [setting, primer]
+factions:
+  - id: exchange-league
+    name: "Exchange League"
+    summary: "Trade syndicate keeping the grid stitched with tolls and favors."
+sites:
+  - id: rustline
+    name: "Rustline Bypass"
+    summary: "Collapsed motorway retrofitted as a caravan spine."
+tech:
+  - id: patched-nets
+    name: "Patched Nets"
+    summary: "Mesh nodes powered by salvage; bandwidth rationed by chits."
