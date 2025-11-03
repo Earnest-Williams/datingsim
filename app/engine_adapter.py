@@ -1,11 +1,12 @@
 from __future__ import annotations
 
-from typing import Any, Dict, List, Optional, Tuple
-
 import contextlib
 import io
+from copy import deepcopy
+from typing import Any, Dict, List, Optional, Tuple
 
 from app.bus import Bus
+from app.loaders import load_character
 from elements import Character, Engine, Girl
 from girl_definitions import girl_list
 from location_definitions import location_list
@@ -34,6 +35,7 @@ class EngineAdapter:
 
         self.e = Engine()
         self.mc = Character()
+        self._base_stats = load_character()
         self.e.build_locations(location_list)
         self.e.build_girls(girl_list)
 
@@ -219,19 +221,19 @@ class EngineAdapter:
         self.bus.state_changed.emit(state)
 
     def _emit_stats(self) -> None:
-        self.bus.stats_updated.emit(
-            {
-                "name": self.mc.name or "You",
-                "level": 1,
-                "hp": self.mc.__dict__.get("hp", 1),
-                "mp": self.mc.__dict__.get("mp", 0),
-                "stamina": self.mc.__dict__.get("stamina", 0),
-                "attrs": {},
-                "skills": {},
-                "conditions": [],
-                "affinity": {},
-            }
-        )
+        stats = deepcopy(self._base_stats)
+        stats["name"] = self.mc.name or stats.get("name", "You")
+        stats["level"] = self.mc.__dict__.get("level", stats.get("level", 1))
+        stats["hp"] = self.mc.__dict__.get("hp", stats.get("hp", 1))
+        stats["mp"] = self.mc.__dict__.get("mp", stats.get("mp", 0))
+        stats["stamina"] = self.mc.__dict__.get("stamina", stats.get("stamina", 0))
+
+        affinity = stats.get("affinity", {})
+        for girl_name, girl in self.e.girls.items():
+            affinity[girl_name] = girl.opinion
+        stats["affinity"] = affinity
+
+        self.bus.stats_updated.emit(stats)
 
     def _emit_scene(self) -> None:
         loc_name = self.e.current_location.name if self.e.current_location else ""
