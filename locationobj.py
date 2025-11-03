@@ -1,4 +1,12 @@
 import random
+from typing import Optional
+
+_rng = random.Random()
+
+
+def set_random_seed(seed: Optional[int]) -> None:
+    """Seed the location module's RNG for deterministic behavior."""
+    _rng.seed(seed)
 
 class Location(object):
     def __init__(self, name, destinations, description, date_description, verbs, nouns, inactive_verbs, observations, experience_gained):
@@ -52,7 +60,7 @@ def activate_location(engine, destination, inputobj, player):
                     print(f"{k} is here.")
                     v.meet_her_at()
             else:
-                see_at = random.choice(v.see_at)
+                see_at = _rng.choice(v.see_at)
                 if engine.current_location.name == see_at:
                     inputobj.character.append(k)
                     engine.current_location.characters.append(k)

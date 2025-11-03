@@ -1,4 +1,12 @@
 import time, random
+from typing import Optional
+
+_rng = random.Random()
+
+
+def set_random_seed(seed: Optional[int]) -> None:
+    """Seed the experience module's RNG for deterministic behavior."""
+    _rng.seed(seed)
 
 class Experience(object):
     def __init__(self):
@@ -26,9 +34,9 @@ class Experience(object):
         #roll to see if EXP happens (based on exp count, girl affinity and
         #location rarity of exp occurance). If exp count too low, don't discount affinity
         if engine.current_location.experience_count < 5:
-            exp_chance = random.randint(1,engine.current_location.experience_count)
+            exp_chance = _rng.randint(1,engine.current_location.experience_count)
         else:
-            exp_chance = random.randint(1,engine.current_location.experience_count - exp_chance_increase)
+            exp_chance = _rng.randint(1,engine.current_location.experience_count - exp_chance_increase)
 
         #if EXP happens, you can commit to her and she can fall in love with
         #you on first "Hang"
@@ -38,7 +46,7 @@ class Experience(object):
 
             if engine.current_location.date_girl.committed_in != True:
                 player.commit(engine.current_location.date_girl)
-            love_chance = random.randint(1,engine.current_location.date_girl.love_count)
+            love_chance = _rng.randint(1,engine.current_location.date_girl.love_count)
             if love_chance == 1:
                 print("She fell in love with you.")
                 engine.fall_in_love(player, engine.current_location.date_girl)
@@ -52,12 +60,12 @@ class Experience(object):
                 player.commit(engine.current_location.date_girl)
             if engine.current_location.date_girl.first_hangout == True:
                 time.sleep(0.5)
-                love_chance = random.randint(1,engine.current_location.date_girl.love_count)
+                love_chance = _rng.randint(1,engine.current_location.date_girl.love_count)
                 if love_chance == 1:
                     print("She almost fell in love with you (but didn't cause it was your first time hanging out).")    
                 engine.current_location.date_girl.first_hangout = False
             else:
-                love_chance = random.randint(1,engine.current_location.date_girl.love_count)
+                love_chance = _rng.randint(1,engine.current_location.date_girl.love_count)
                 if love_chance == 1:
                     print("She fell in love with you.")
                     engine.fall_in_love(player, engine.current_location.date_girl)

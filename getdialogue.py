@@ -1,6 +1,15 @@
 import random
+from typing import Optional
 import time
 from script_loader import load_script
+
+
+_rng = random.Random()
+
+
+def set_random_seed(seed: Optional[int]) -> None:
+    """Seed the dialogue module's RNG for deterministic behavior."""
+    _rng.seed(seed)
 
 
 class Dialogue(object):
@@ -84,7 +93,7 @@ class Dialogue(object):
                     print(
                         2,
                         '-',
-                        random.choice(engine.current_location.observations),
+                        _rng.choice(engine.current_location.observations),
                     )
                     print(
                         3,
@@ -119,7 +128,7 @@ class Dialogue(object):
                     print(
                         2,
                         '-',
-                        random.choice(engine.current_location.observations),
+                        _rng.choice(engine.current_location.observations),
                     )
                     print(
                         3,
