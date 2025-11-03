@@ -56,7 +56,7 @@ def activate_location(engine, destination, inputobj, player):
                 if engine.current_location.name == see_at:
                     inputobj.character.append(k)
                     engine.current_location.characters.append(k)
-                    print("%s is here." % k)
+                    print(f"{k} is here.")
                 
     #add currect location to player.known_locations if its not already there
     if engine.current_location.name not in player.known_locations:            
