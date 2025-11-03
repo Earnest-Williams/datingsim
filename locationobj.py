@@ -49,7 +49,7 @@ def activate_location(engine, destination, inputobj, player):
                 if engine.current_location.name == v.meet_at:
                     inputobj.character.append(k)
                     engine.current_location.characters.append(k)
-                    print("%s is here." % k)
+                    print(f"{k} is here.")
                     v.meet_her_at()
             else:
                 see_at = random.choice(v.see_at)
