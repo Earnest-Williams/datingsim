@@ -68,7 +68,7 @@ dialogue_trees:
         - 1
         question:
         - "Sure, the copy machine is right over here. I will show you."
-        - 0
+        - 1
         observation:
         - "Yeah...."
         - 0
