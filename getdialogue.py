@@ -13,7 +13,7 @@ class Dialogue(object):
         encounter_text = self.messages["encounter_message"].format(
             name=player.focus_character.name
         )
-        print("\n        %s\n" % encounter_text)
+        print(f"\n        {encounter_text}\n")
 
         print(self.messages["greeting"])
 
